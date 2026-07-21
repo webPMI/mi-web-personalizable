@@ -1,0 +1,109 @@
+---
+// ============================================
+// SocialLinks - Redes sociales del sitio
+// ============================================
+//
+// Renderiza las redes sociales solo si al menos
+// una tiene URL configurada.
+//
+// Props: socialLinks
+// ============================================
+
+export interface Props {
+    socialLinks?: {
+        twitter?: string;
+        github?: string;
+        linkedin?: string;
+        instagram?: string;
+    };
+}
+
+const { socialLinks } = Astro.props;
+
+const hasSocialLinks =
+    socialLinks &&
+    (socialLinks.twitter ||
+        socialLinks.github ||
+        socialLinks.linkedin ||
+        socialLinks.instagram);
+---
+
+{
+    hasSocialLinks && (
+        <section class="social-section">
+            <div class="container">
+                <div class="social-links">
+                    {socialLinks!.twitter && (
+                        <a
+                            href={socialLinks!.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="social-link"
+                        >
+                            Twitter
+                        </a>
+                    )}
+                    {socialLinks!.github && (
+                        <a
+                            href={socialLinks!.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="social-link"
+                        >
+                            GitHub
+                        </a>
+                    )}
+                    {socialLinks!.linkedin && (
+                        <a
+                            href={socialLinks!.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="social-link"
+                        >
+                            LinkedIn
+                        </a>
+                    )}
+                    {socialLinks!.instagram && (
+                        <a
+                            href={socialLinks!.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="social-link"
+                        >
+                            Instagram
+                        </a>
+                    )}
+                </div>
+            </div>
+        </section>
+    )
+}
+
+<style>
+    .social-section {
+        padding: 3rem 0;
+        background: #f8fafc;
+    }
+    .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+    }
+    .social-link {
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #4b5563;
+        transition: color 0.2s;
+    }
+    .social-link:hover {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .social-links {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+    }
+</style>

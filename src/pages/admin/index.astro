@@ -1,0 +1,44 @@
+---
+// ============================================
+// /admin — Dashboard del Panel de Administración
+// ============================================
+// Versión liviana que usa AdminLayout como layout base.
+// AdminLayout maneja: auth, navegación, estados (loading/unauthenticated/no-site).
+// Este componente solo se preocupa del contenido del Dashboard.
+// ============================================
+
+import AdminLayout from "../../components/admin/AdminLayout.astro";
+---
+
+<AdminLayout>
+  <!-- Información del sitio -->
+  <div class="card">
+    <div class="card-header">Información del Sitio</div>
+    <div id="site-info-content">
+      <p class="text-muted">Cargando información del sitio...</p>
+    </div>
+  </div>
+
+  <!-- Próximas funcionalidades -->
+  <div class="card">
+    <div class="card-header">Próximamente</div>
+    <ul class="text-muted">
+      <li>Gestión de contenido (posts, páginas)</li>
+      <li>Personalización de tema y diseño</li>
+      <li>Gestión de miembros y roles</li>
+      <li>Analíticas del sitio</li>
+      <li>Configuración SEO</li>
+    </ul>
+  </div>
+
+  <!-- Enlace rápido a Configuración -->
+  <div class="card" style="text-align: center;">
+    <p class="text-muted">¿Quieres personalizar tu sitio?</p>
+    <a href="/admin/config" class="btn btn-primary btn-lg">Ir a Configuración</a>
+  </div>
+</AdminLayout>
+
+<script>
+  import { initDashboard } from "../../components/admin/AdminDashboard";
+  initDashboard();
+</script>

@@ -1,0 +1,83 @@
+---
+// ============================================
+// Navbar - Barra de navegación dinámica
+// ============================================
+//
+// Renderiza el navbar solo si hay enlaces.
+// Props: siteName, navLinks
+// ============================================
+
+export interface Props {
+    siteName: string;
+    navLinks?: Array<{ label: string; href: string }>;
+}
+
+const { siteName, navLinks } = Astro.props;
+const displayName = siteName || "Mi Web Personalizable";
+---
+
+{
+    navLinks && navLinks.length > 0 && (
+        <header class="navbar">
+            <div class="container navbar-inner">
+                <a href="/" class="navbar-brand">
+                    {displayName}
+                </a>
+                <nav class="navbar-links">
+                    {navLinks.map((link) => (
+                        <a href={link.href} class="navbar-link">
+                            {link.label}
+                        </a>
+                    ))}
+                </nav>
+            </div>
+        </header>
+    )
+}
+
+<style>
+    .navbar {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .navbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 4rem;
+    }
+    .navbar-brand {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .navbar-brand:hover {
+        text-decoration: none;
+        color: var(--primary);
+    }
+    .navbar-links {
+        display: flex;
+        gap: 1.5rem;
+    }
+    .navbar-link {
+        font-size: 0.9375rem;
+        color: #4b5563;
+        transition: color 0.2s;
+    }
+    .navbar-link:hover {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .navbar-inner {
+            flex-direction: column;
+            height: auto;
+            padding: 1rem 0;
+            gap: 0.75rem;
+        }
+    }
+</style>

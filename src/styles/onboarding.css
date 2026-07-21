@@ -1,0 +1,434 @@
+/* ============================================
+   Onboarding - Estilos específicos
+   ============================================ */
+
+.onboarding-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.onboarding-container .card {
+  text-align: center;
+}
+
+.onboarding-container .card h2 {
+  text-align: center;
+}
+
+.onboarding-container .card .alert-info {
+  text-align: center;
+}
+
+.onboarding-container .form-group {
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 480px;
+}
+
+.onboarding-container .btn-block {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.onboarding-container hr {
+  text-align: center;
+}
+
+.onboarding-container h3 {
+  text-align: center;
+}
+
+#loading-state p {
+  text-align: center;
+}
+
+#success-state {
+  text-align: center;
+}
+
+/* ============================================
+   Step Indicator
+   ============================================ */
+
+.steps-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: var(--space-lg) auto;
+  max-width: 500px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 1;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.step.completed .step-number {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.step.active .step-label {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.step.completed .step-label {
+  color: var(--color-success);
+}
+
+.step-connector {
+  flex: 0 0 40px;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 var(--space-xs);
+  margin-bottom: 24px;
+  transition: background 0.3s ease;
+}
+
+/* El connector se ilumina cuando el paso anterior está completado */
+.step.completed + .step-connector {
+  background: var(--color-success);
+}
+
+/* ============================================
+   Step Content
+   ============================================ */
+
+.step-content {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.step-content.hidden {
+  display: none;
+}
+
+.step-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+/* ============================================
+   Language Selection
+   ============================================ */
+
+.language-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin: var(--space-lg) auto;
+  max-width: 400px;
+}
+
+.language-option {
+  display: block;
+  cursor: pointer;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-md);
+  transition: all 0.2s ease;
+  background: var(--color-bg);
+}
+
+.language-option:hover {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.language-option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.language-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.language-option-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.language-flag {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.language-option-content strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+}
+
+.language-option-content .text-muted {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ============================================
+   Password field
+   ============================================ */
+
+.password-field {
+  display: flex;
+  gap: 0;
+}
+
+.password-field input {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.password-toggle-btn {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.password-toggle-btn:hover {
+  background: var(--color-border);
+}
+
+.password-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--space-xs);
+}
+
+.password-strength span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.password-strength span.active.weak {
+  background: var(--color-danger);
+}
+
+.password-strength span.active.medium {
+  background: var(--color-warning);
+}
+
+.password-strength span.active.strong {
+  background: var(--color-success);
+}
+
+.password-hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+}
+
+.password-hint.valid {
+  color: var(--color-success);
+}
+
+/* ============================================
+   Domain field
+   ============================================ */
+
+.domain-field {
+  display: flex;
+  gap: 0;
+}
+
+.domain-field input {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.domain-field .btn-outline {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.domain-field .btn-outline:hover {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.domain-field .btn-outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+}
+
+.domain-status {
+  font-size: 0.85rem;
+  margin-top: var(--space-xs);
+  transition: all 0.2s ease;
+}
+
+.domain-status.available {
+  color: var(--color-success);
+}
+
+.domain-status.unavailable {
+  color: var(--color-danger);
+}
+
+.domain-status.checking {
+  color: var(--color-text-muted);
+}
+
+.domain-status.error {
+  color: var(--color-danger);
+}
+
+/* ============================================
+   Form errors
+   ============================================ */
+
+.field-error {
+  display: none;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  margin-top: var(--space-xs);
+}
+
+.form-group.error .field-error {
+  display: block;
+}
+
+.form-group.error input,
+.form-group.error textarea {
+  border-color: var(--color-danger);
+}
+
+/* ============================================
+   Step Transitions / Animations
+   ============================================ */
+
+.step-content {
+  position: relative;
+}
+
+/* Estado inicial de entrada (fuera de la pantalla hacia la derecha/izquierda) */
+.step-enter-forward {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.step-enter-backward {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* Animación de entrada activa */
+.step-enter {
+  animation: stepEnter 0.35s ease-out forwards;
+}
+
+/* Animación de salida */
+.step-exit-forward {
+  animation: stepExitForward 0.3s ease-in forwards;
+}
+
+.step-exit-backward {
+  animation: stepExitBackward 0.3s ease-in forwards;
+}
+
+@keyframes stepEnter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--enter-offset, 30px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes stepExitForward {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes stepExitBackward {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+
+/* ============================================
+   Hidden utility
+   ============================================ */
+
+.hidden {
+  display: none !important;
+}

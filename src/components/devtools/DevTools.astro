@@ -1,0 +1,70 @@
+---
+import "../../styles/devtools.css";
+
+const isDev = import.meta.env.DEV;
+---
+
+{
+  isDev && (
+    <div id="devtools">
+      <!-- Botón flotante -->
+      <button id="devtools-toggle" class="devtools-toggle" title="Herramientas de desarrollo">
+        <span>⚙️</span>
+      </button>
+
+      <!-- Panel -->
+      <div id="devtools-panel" class="devtools-panel hidden">
+        <div class="devtools-header">
+          <strong>DevTools</strong>
+          <span class="devtools-badge">DEV</span>
+        </div>
+
+        <!-- Dominio simulado -->
+        <div class="devtools-section">
+          <label class="devtools-label">Dominio simulado</label>
+          <div class="devtools-row">
+            <input type="text" id="devtools-domain-input" class="devtools-input" placeholder="ej: midominio.com" />
+            <button id="devtools-domain-apply" class="devtools-btn">Aplicar</button>
+          </div>
+        </div>
+
+        <!-- Firebase -->
+        <div class="devtools-section">
+          <label class="devtools-label">Firebase</label>
+          <div class="devtools-row">
+            <span id="devtools-firebase-status" class="devtools-status">Comprobar...</span>
+          </div>
+        </div>
+
+        <!-- Onboarding (oculto por defecto, se muestra con JS) -->
+        <div id="devtools-onboarding-section" class="devtools-section hidden">
+          <label class="devtools-label">Onboarding</label>
+          <div class="devtools-row">
+            <button id="devtools-onboarding-autofill" class="devtools-btn devtools-btn-accent">Autocompletar formulario</button>
+          </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="devtools-section">
+          <label class="devtools-label">Acciones rápidas</label>
+          <div class="devtools-row">
+            <button id="devtools-action-reset" class="devtools-btn devtools-btn-secondary">Reiniciar onboarding</button>
+            <button id="devtools-action-reload" class="devtools-btn devtools-btn-secondary">Recargar</button>
+          </div>
+        </div>
+
+        <div class="devtools-footer">
+          <small>Visible solo en desarrollo</small>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  if (import.meta.env.DEV) {
+    import("./devtools").then(({ initDevToolsUI }) => {
+      initDevToolsUI();
+    });
+  }
+</script>

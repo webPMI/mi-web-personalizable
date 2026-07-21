@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================================
+    // Reglas generales
+    // ============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserUid() {
+      return request.auth.uid;
+    }
+
+    // ============================================================
+    // Archivos públicos (imágenes, assets)
+    // Cualquiera puede leer, solo autenticados pueden subir
+    // ============================================================
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && request.resource.size < 10 * 1024 * 1024 // 10MB max
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ============================================================
+    // Archivos de usuario (privados)
+    // Solo el propietario puede leer/escribir
+    // ============================================================
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isAuthenticated() && getUserUid() == userId;
+    }
+
+    // ============================================================
+    // Archivos de blog (imágenes de posts)
+    // ============================================================
+    match /blog/{postId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ============================================================
+    // Denegar todo lo demás
+    // ============================================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

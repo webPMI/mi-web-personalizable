@@ -1,0 +1,78 @@
+---
+// ============================================
+// Footer - Pie de página del sitio
+// ============================================
+//
+// Siempre se muestra con el nombre del sitio.
+// Opcionalmente renderiza enlaces del navbar.
+//
+// Props: siteName, navLinks
+// ============================================
+
+export interface Props {
+    siteName: string;
+    navLinks?: Array<{ label: string; href: string }>;
+}
+
+const { siteName, navLinks } = Astro.props;
+const displayName = siteName || "Mi Web Personalizable";
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="footer">
+    <div class="container footer-inner">
+        <p>
+            &copy; {currentYear}
+            {displayName}. Todos los derechos reservados.
+        </p>
+        {
+            navLinks && navLinks.length > 0 && (
+                <nav class="footer-links">
+                    {navLinks.map((link) => (
+                        <a href={link.href} class="footer-link">
+                            {link.label}
+                        </a>
+                    ))}
+                </nav>
+            )
+        }
+    </div>
+</footer>
+
+<style>
+    .footer {
+        background: #1a1a2e;
+        color: #e5e7eb;
+        padding: 2rem 0;
+    }
+    .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .footer p {
+        font-size: 0.875rem;
+    }
+    .footer-links {
+        display: flex;
+        gap: 1.5rem;
+    }
+    .footer-link {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        transition: color 0.2s;
+    }
+    .footer-link:hover {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .footer-inner {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>

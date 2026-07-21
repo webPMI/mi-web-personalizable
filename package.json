@@ -1,0 +1,25 @@
+{
+  "name": "mi-web-personalizable",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "i18n:find": "node scripts/i18n-find.mjs",
+    "i18n:stats": "node scripts/i18n-stats.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.9",
+    "astro": "^7.1.3",
+    "firebase": "^12.16.0",
+    "firebase-admin": "^14.2.0",
+    "firebase-tools": "^15.24.0",
+    "typescript": "^6.0.3"
+  }
+}

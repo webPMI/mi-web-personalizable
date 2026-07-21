@@ -1,0 +1,187 @@
+---
+// ============================================
+// /admin/config — Configuración del Sitio
+// ============================================
+// Página de configuración del sitio. Usa AdminLayout
+// como layout base (maneja auth, navegación, estados).
+// ============================================
+
+import AdminLayout from "../../components/admin/AdminLayout.astro";
+---
+
+<AdminLayout>
+  <div class="card">
+    <div class="card-header">Configuración del Sitio</div>
+    <p class="text-muted">Aquí puedes gestionar toda la configuración de tu sitio web.</p>
+
+    <form id="config-form">
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Información General -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Información General</h3>
+
+      <div class="form-group" id="fg-site-name">
+        <label for="site-name">Nombre del sitio</label>
+        <input type="text" id="site-name" placeholder="Mi sitio web" />
+        <p class="field-error">El nombre del sitio es obligatorio.</p>
+      </div>
+
+      <div class="form-group" id="fg-site-description">
+        <label for="site-description">Descripción</label>
+        <textarea id="site-description" rows="3" placeholder="Breve descripción de tu sitio"></textarea>
+      </div>
+
+      <div class="form-group" id="fg-site-locale">
+        <label for="site-locale">Idioma principal</label>
+        <select id="site-locale">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Redes Sociales -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Redes Sociales</h3>
+      <p class="text-muted section-desc">Enlaces a tus perfiles en redes sociales. Se mostrarán en la página pública.</p>
+
+      <div class="form-group">
+        <label for="social-twitter">Twitter / X</label>
+        <input type="url" id="social-twitter" placeholder="https://twitter.com/tuusuario" />
+      </div>
+
+      <div class="form-group">
+        <label for="social-github">GitHub</label>
+        <input type="url" id="social-github" placeholder="https://github.com/tuusuario" />
+      </div>
+
+      <div class="form-group">
+        <label for="social-linkedin">LinkedIn</label>
+        <input type="url" id="social-linkedin" placeholder="https://linkedin.com/in/tuusuario" />
+      </div>
+
+      <div class="form-group">
+        <label for="social-instagram">Instagram</label>
+        <input type="url" id="social-instagram" placeholder="https://instagram.com/tuusuario" />
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Hero (Portada) -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Hero (Portada)</h3>
+      <p class="text-muted section-desc">Personaliza la sección principal de tu página de inicio.</p>
+
+      <div class="form-group">
+        <label for="hero-title">Título del Hero</label>
+        <input type="text" id="hero-title" placeholder="Bienvenido a mi sitio" />
+      </div>
+
+      <div class="form-group">
+        <label for="hero-subtitle">Subtítulo</label>
+        <input type="text" id="hero-subtitle" placeholder="Una breve descripción impactante" />
+      </div>
+
+      <div class="form-group">
+        <label for="hero-image">URL de imagen de fondo</label>
+        <input type="url" id="hero-image" placeholder="https://ejemplo.com/imagen.jpg" />
+      </div>
+
+      <div class="form-group">
+        <label for="hero-cta-text">Texto del botón CTA</label>
+        <input type="text" id="hero-cta-text" placeholder="Comenzar ahora" />
+      </div>
+
+      <div class="form-group">
+        <label for="hero-cta-link">Enlace del botón CTA</label>
+        <input type="text" id="hero-cta-link" placeholder="/about" />
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Barra de Navegación -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Barra de Navegación</h3>
+      <p class="text-muted section-desc">Configura los enlaces que aparecen en el menú de navegación.</p>
+
+      <div id="nav-links-container">
+        <!-- Los enlaces se generan dinámicamente desde JS -->
+      </div>
+
+      <button type="button" id="btn-add-nav-link" class="btn btn-secondary btn-sm">+ Añadir enlace</button>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: SEO -->
+      <!-- ============================================ -->
+      <h3 class="section-title">SEO (Optimización para buscadores)</h3>
+      <p class="text-muted section-desc">Configura cómo aparece tu sitio en los resultados de búsqueda.</p>
+
+      <div class="form-group">
+        <label for="seo-title">Título por defecto</label>
+        <input type="text" id="seo-title" placeholder="Mi Sitio Web - Inicio" />
+      </div>
+
+      <div class="form-group">
+        <label for="seo-description">Descripción por defecto</label>
+        <textarea id="seo-description" rows="2" placeholder="Descripción breve para los buscadores"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="seo-image">URL de imagen Open Graph</label>
+        <input type="url" id="seo-image" placeholder="https://ejemplo.com/og-image.jpg" />
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Tema y Apariencia -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Tema y Apariencia</h3>
+      <p class="text-muted section-desc">Personaliza los colores y la apariencia de tu sitio.</p>
+
+      <div class="form-group">
+        <label for="theme-primary">Color primario</label>
+        <input type="text" id="theme-primary" placeholder="#6366f1" />
+      </div>
+
+      <div class="form-group">
+        <label for="theme-font">Fuente tipográfica</label>
+        <input type="text" id="theme-font" placeholder="Inter, sans-serif" />
+      </div>
+
+      <div class="form-group">
+        <label for="theme-layout">Diseño</label>
+        <select id="theme-layout">
+          <option value="centered">Centrado</option>
+          <option value="full-width">Ancho completo</option>
+        </select>
+      </div>
+
+      <hr />
+
+      <!-- Feedback -->
+      <div id="save-feedback" class="hidden"></div>
+
+      <!-- Botón guardar -->
+      <button type="submit" id="btn-save" class="btn btn-primary btn-lg">
+        Guardar cambios
+      </button>
+    </form>
+  </div>
+
+  <!-- Estado de carga (mientras se obtienen los datos) -->
+  <div id="settings-content">
+    <p class="text-muted">Cargando configuración...</p>
+  </div>
+</AdminLayout>
+
+<script>
+  import { initSiteConfig } from "../../components/admin/SiteConfig";
+  initSiteConfig();
+</script>

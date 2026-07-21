@@ -1,0 +1,93 @@
+---
+// ============================================
+// PublicLayout - Layout público 100% dinámico
+// ============================================
+//
+// Orquestador que importa y monta los
+// subcomponentes del sitio público.
+// No contiene estilos propios.
+//
+// Uso:
+//   <PublicLayout site={siteData} />
+// ============================================
+
+import type { SiteData } from "../../lib/site";
+import Navbar from "./Navbar.astro";
+import HeroSection from "./HeroSection.astro";
+import DynamicSections from "./DynamicSections.astro";
+import SocialLinks from "./SocialLinks.astro";
+import Footer from "./Footer.astro";
+
+export interface Props {
+    site: SiteData;
+}
+
+const { site } = Astro.props;
+
+const displayName = site.siteName || "Mi Web Personalizable";
+
+// --- Tema CSS ---
+const primaryColor = site.theme?.primaryColor || "#2563eb";
+const fontFamily = site.theme?.fontFamily || "'Inter', system-ui, sans-serif";
+const layout = site.theme?.layout || "centered";
+const maxWidth = layout === "full-width" ? "100%" : "1200px";
+---
+
+<!DOCTYPE html>
+<html lang={site.locale || "es"}>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{site.seo?.defaultTitle || displayName}</title>
+    {site.seo?.defaultDescription && (
+        <meta name="description" content={site.seo.defaultDescription} />
+    )}
+    {site.seo?.defaultImage && (
+        <>
+            <meta property="og:image" content={site.seo.defaultImage} />
+            <meta name="twitter:card" content="summary_large_image" />
+        </>
+    )}
+    <style>
+        :root {
+            --primary: {primaryColor};
+            --font-family: {fontFamily};
+            --max-width: {maxWidth};
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            color: #1a1a2e;
+            background: #ffffff;
+            line-height: 1.6;
+        }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        img { max-width: 100%; height: auto; }
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <Navbar siteName={site.siteName} navLinks={site.navLinks} />
+
+    <main>
+        <HeroSection
+            heroTitle={site.heroTitle}
+            heroSubtitle={site.heroSubtitle}
+            heroImage={site.heroImage}
+            heroCtaText={site.heroCtaText}
+            heroCtaLink={site.heroCtaLink}
+        />
+
+        <DynamicSections sections={site.sections} />
+
+        <SocialLinks socialLinks={site.socialLinks} />
+    </main>
+
+    <Footer siteName={site.siteName} navLinks={site.navLinks} />
+</body>
+</html>

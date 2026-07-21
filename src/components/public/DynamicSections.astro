@@ -1,0 +1,175 @@
+---
+// ============================================
+// DynamicSections - Secciones dinámicas del sitio
+// ============================================
+//
+// Renderiza las secciones personalizadas ordenadas por 'order'.
+// Tipos soportados: text, image-text, gallery, cards
+//
+// Props: sections[]
+// ============================================
+
+import type { SiteData } from "../../lib/site";
+
+export interface Props {
+    sections?: SiteData["sections"];
+}
+
+const { sections } = Astro.props;
+
+const sortedSections = sections
+    ? [...sections].sort((a, b) => a.order - b.order)
+    : [];
+---
+
+{
+    sortedSections.map((section) => (
+        <section class="section" id={`section-${section.id}`}>
+            <div class="container">
+                {section.type === "text" && (
+                    <div class="section-text">
+                        <h2>{section.title}</h2>
+                        <div set:html={section.content} />
+                    </div>
+                )}
+
+                {section.type === "image-text" && (
+                    <div class="section-image-text">
+                        <div class="section-image-text-content">
+                            <h2>{section.title}</h2>
+                            <div set:html={section.content} />
+                        </div>
+                        {section.image && (
+                            <div class="section-image-text-media">
+                                <img
+                                    src={section.image}
+                                    alt={section.title}
+                                    loading="lazy"
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {section.type === "gallery" && (
+                    <div class="section-gallery">
+                        <h2>{section.title}</h2>
+                        <div class="gallery-grid">
+                            {section.content.split(",").map((imgUrl) => (
+                                <div class="gallery-item">
+                                    <img
+                                        src={imgUrl.trim()}
+                                        alt=""
+                                        loading="lazy"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {section.type === "cards" && (
+                    <div class="section-cards">
+                        <h2>{section.title}</h2>
+                        <div class="cards-grid">
+                            {section.content.split("||").map((card) => {
+                                const [cardTitle, cardDesc] = card
+                                    .split("|")
+                                    .map((s) => s.trim());
+                                return (
+                                    <div class="card">
+                                        <h3>{cardTitle}</h3>
+                                        {cardDesc && <p>{cardDesc}</p>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </section>
+    ))
+}
+
+<style>
+    .section {
+        padding: 4rem 0;
+    }
+    .section:nth-child(even) {
+        background: #f9fafb;
+    }
+    .section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1a1a2e;
+    }
+
+    /* Image-Text */
+    .section-image-text {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: center;
+    }
+    .section-image-text-content h2 {
+        margin-bottom: 1rem;
+    }
+    .section-image-text-media img {
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Gallery */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    .gallery-item {
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .gallery-item img:hover {
+        transform: scale(1.05);
+    }
+
+    /* Cards */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: box-shadow 0.2s;
+    }
+    .card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .card p {
+        color: #6b7280;
+        font-size: 0.9375rem;
+    }
+
+    @media (max-width: 768px) {
+        .section-image-text {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+</style>

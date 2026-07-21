@@ -1,0 +1,173 @@
+---
+import "../../styles/admin.css";
+import "../../styles/onboarding.css";
+
+export interface Props {
+  domain: string;
+}
+
+const { domain } = Astro.props;
+---
+
+<div class="onboarding-container" data-domain={domain}>
+  <div class="card">
+    <h2 id="config-title">Configura tu sitio web</h2>
+
+    <div class="alert alert-info" id="config-domain-info">
+      Vas a registrar y configurar el dominio: <strong>{domain}</strong>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="steps-indicator" id="steps-indicator">
+      <div class="step active" data-step="1">
+        <span class="step-number">1</span>
+        <span class="step-label" id="step-label-1">Idioma</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" data-step="2">
+        <span class="step-number">2</span>
+        <span class="step-label" id="step-label-2">Cuenta</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" data-step="3">
+        <span class="step-number">3</span>
+        <span class="step-label" id="step-label-3">Sitio</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Language Selection -->
+    <div id="step-1" class="step-content">
+      <h3 id="step-1-title">Selecciona tu idioma</h3>
+      <p class="text-muted" id="step-1-description">Elige el idioma que prefieras para tu sitio web.</p>
+
+      <div class="language-options">
+        <label class="language-option" data-locale="es">
+          <input type="radio" name="locale" value="es" checked />
+          <div class="language-option-content">
+            <span class="language-flag">🇪🇸</span>
+            <div>
+              <strong id="lang-es-label">Español</strong>
+              <p class="text-muted" id="lang-es-desc">Idioma por defecto para tu sitio</p>
+            </div>
+          </div>
+        </label>
+        <label class="language-option" data-locale="en">
+          <input type="radio" name="locale" value="en" />
+          <div class="language-option-content">
+            <span class="language-flag">🇬🇧</span>
+            <div>
+              <strong id="lang-en-label">English</strong>
+              <p class="text-muted" id="lang-en-desc">Default language for your site</p>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <button id="btn-step-1-next" class="btn btn-primary btn-lg mt-md">Continuar</button>
+    </div>
+
+    <!-- Step 2: Account -->
+    <div id="step-2" class="step-content hidden">
+      <h3 id="step-2-title">Tu cuenta</h3>
+
+      <div class="form-group" id="fg-username">
+        <label for="username" id="label-username">Nombre de usuario</label>
+        <input type="text" id="username" placeholder="Ej: juanperez" autofocus />
+        <p class="field-error" id="err-username"></p>
+      </div>
+
+      <div class="form-group" id="fg-name">
+        <label for="name" id="label-name">Nombre completo</label>
+        <input type="text" id="name" placeholder="Ej: Juan Pérez" />
+        <p class="field-error" id="err-name"></p>
+      </div>
+
+      <div class="form-group" id="fg-email">
+        <label for="email" id="label-email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="tu@email.com" />
+        <p class="field-error" id="err-email"></p>
+      </div>
+
+      <div class="form-group" id="fg-password">
+        <label for="password" id="label-password">Contraseña</label>
+        <div class="password-field">
+          <input type="password" id="password" placeholder="Mínimo 6 caracteres" />
+          <button type="button" class="password-toggle-btn" id="toggle-password">Mostrar</button>
+        </div>
+        <div class="password-strength">
+          <span id="ps-1"></span>
+          <span id="ps-2"></span>
+          <span id="ps-3"></span>
+        </div>
+        <p class="password-hint" id="password-hint">Mínimo 6 caracteres</p>
+        <p class="field-error" id="err-password"></p>
+      </div>
+
+      <div class="form-group" id="fg-password-confirm">
+        <label for="password-confirm" id="label-password-confirm">Confirmar contraseña</label>
+        <div class="password-field">
+          <input type="password" id="password-confirm" placeholder="Repite la contraseña" />
+          <button type="button" class="password-toggle-btn" id="toggle-password-confirm">Mostrar</button>
+        </div>
+        <p class="field-error" id="err-password-confirm"></p>
+      </div>
+
+      <div class="step-buttons">
+        <button id="btn-step-2-back" class="btn btn-secondary">Atrás</button>
+        <button id="btn-step-2-next" class="btn btn-primary">Continuar</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Site Info -->
+    <div id="step-3" class="step-content hidden">
+      <h3 id="step-3-title">Información de tu sitio</h3>
+
+      <!-- Campo de dominio personalizado -->
+      <div class="form-group" id="fg-domain">
+        <label for="domain-input" id="label-domain">Tu dominio</label>
+        <div class="domain-field">
+          <input type="text" id="domain-input" placeholder="Ej: tudominio.com" />
+          <button type="button" id="btn-check-domain" class="btn btn-sm btn-outline">Verificar</button>
+        </div>
+        <p class="field-hint" id="hint-domain">Puedes usar el dominio detectado o escribir uno personalizado.</p>
+        <p id="domain-status" class="domain-status"></p>
+        <p class="field-error" id="err-domain"></p>
+      </div>
+
+      <div class="form-group" id="fg-site-name">
+        <label for="site-name" id="label-site-name">Nombre del sitio</label>
+        <input type="text" id="site-name" placeholder="Ej: Mi Blog Personal" />
+        <p class="field-error" id="err-site-name"></p>
+      </div>
+
+      <div class="form-group" id="fg-site-description">
+        <label for="site-description" id="label-site-description">Descripción breve</label>
+        <textarea id="site-description" rows="3" placeholder="Ej: Un blog sobre tecnología y desarrollo web"></textarea>
+        <p class="field-error" id="err-site-description"></p>
+      </div>
+
+      <div class="step-buttons">
+        <button id="btn-step-3-back" class="btn btn-secondary">Atrás</button>
+        <button id="btn-submit" class="btn btn-primary btn-lg">Crear cuenta y registrar sitio</button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading-state" class="hidden text-center mt-lg">
+      <p id="loading-text">Creando tu cuenta y registrando el sitio...</p>
+    </div>
+
+    <!-- Success state -->
+    <div id="success-state" class="hidden text-center mt-lg">
+      <div class="alert alert-success" id="success-title">¡Todo listo!</div>
+      <h3 id="success-welcome">Bienvenido, <span id="display-name"></span></h3>
+      <p id="success-domain-registered">Tu dominio <strong>{domain}</strong> ha sido registrado.</p>
+      <p class="text-muted" id="success-redirecting">Redirigiendo al panel de administración...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { initOnboarding } from "./onboarding";
+  initOnboarding();
+</script>

@@ -1,0 +1,89 @@
+---
+// ============================================
+// HeroSection - Hero del sitio
+// ============================================
+//
+// Renderiza el hero solo si heroTitle existe.
+// Props: heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink
+// ============================================
+
+export interface Props {
+    heroTitle?: string;
+    heroSubtitle?: string;
+    heroImage?: string;
+    heroCtaText?: string;
+    heroCtaLink?: string;
+}
+
+const { heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink } =
+    Astro.props;
+---
+
+{
+    heroTitle && (
+        <section
+            class="hero"
+            style={heroImage ? `background-image: url(${heroImage})` : ""}
+        >
+            <div class="container hero-content">
+                <h1 class="hero-title">{heroTitle}</h1>
+                {heroSubtitle && <p class="hero-subtitle">{heroSubtitle}</p>}
+                {heroCtaText && heroCtaLink && (
+                    <a href={heroCtaLink} class="hero-cta">
+                        {heroCtaText}
+                    </a>
+                )}
+            </div>
+        </section>
+    )
+}
+
+<style>
+    .hero {
+        padding: 6rem 0;
+        background-color: #f8fafc;
+        background-size: cover;
+        background-position: center;
+        background-blend-mode: overlay;
+        text-align: center;
+    }
+    .hero-content {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        color: #1a1a2e;
+    }
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+    .hero-cta {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background: var(--primary);
+        color: #ffffff;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: opacity 0.2s;
+    }
+    .hero-cta:hover {
+        opacity: 0.9;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .hero {
+            padding: 4rem 0;
+        }
+        .hero-title {
+            font-size: 2rem;
+        }
+    }
+</style>

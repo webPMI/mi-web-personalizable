@@ -1,0 +1,224 @@
+---
+// ============================================
+// AdminLayout.astro — Layout compartido del panel admin
+// ============================================
+// Este componente es el esqueleto base que envuelve a todas las
+// páginas del admin. Maneja:
+//   - Autenticación (onAuthChange)
+//   - Detección del sitio del usuario (checkUserSite)
+//   - Estados: loading, unauthenticated, no-site, authenticated
+//   - Navegación tipo tabs (Dashboard, Configuración, ...)
+//   - Logout
+//
+// Expone vía data attributes en el contenedor:
+//   data-site-domain  → dominio del sitio autenticado
+//   data-site-data    → JSON con datos del sitio (SiteData)
+// ============================================
+
+import "../../styles/admin.css";
+import { getEffectiveDomain } from "../../lib/domain-check";
+
+const domain = getEffectiveDomain();
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Administración</title>
+</head>
+<body>
+  <div class="admin-container" id="admin-app" data-domain={domain}>
+
+    <!-- Estado de carga -->
+    <div id="loading-state" class="text-center mt-lg">
+      <p id="loading-text">Verificando autenticación...</p>
+    </div>
+
+    <!-- Estado: No autenticado -->
+    <div id="unauthenticated-state" class="hidden text-center mt-lg">
+      <div class="card" style="max-width: 400px; margin: 0 auto;">
+        <h2 id="unauthenticated-title">Acceso restringido</h2>
+        <p class="text-muted" id="unauthenticated-desc">
+          Debes iniciar sesión para acceder al panel de administración.
+        </p>
+        <a href="/" class="btn btn-primary btn-lg mt-md" id="btn-back-home">Volver al inicio</a>
+      </div>
+    </div>
+
+    <!-- Estado: Autenticado pero sin sitio registrado -->
+    <div id="no-site-state" class="hidden">
+      <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+        <h2 id="no-site-title">No hay sitio registrado</h2>
+        <p class="text-muted" id="no-site-desc">
+          El dominio <strong>{domain}</strong> no tiene un sitio registrado.
+          Si acabas de registrarte, espera unos segundos y recarga la página.
+        </p>
+        <button id="btn-refresh" class="btn btn-primary btn-lg mt-md">Recargar página</button>
+        <button id="btn-logout-no-site" class="btn btn-secondary mt-sm">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <!-- Estado: Autenticado y con sitio -->
+    <div id="authenticated-state" class="hidden">
+      <!-- Header -->
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 style="margin: 0;" id="dashboard-title">Panel de Administración</h1>
+          <p class="text-muted" style="margin: var(--space-xs) 0 0 0;" id="dashboard-managing">
+            Gestionando: <strong>{domain}</strong>
+          </p>
+        </div>
+        <button id="btn-logout" class="btn btn-danger btn-sm">Cerrar sesión</button>
+      </div>
+
+      <!-- Navegación tipo tabs -->
+      <nav class="admin-nav" id="admin-nav">
+        <a href="/admin" id="nav-dashboard" class="active">Dashboard</a>
+        <a href="/admin/config" id="nav-config">Configuración</a>
+      </nav>
+
+      <!-- Contenido de la página hija -->
+      <div id="page-content">
+        <slot />
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+<script>
+  import { onAuthChange, logoutUser } from "../../lib/firebase/auth";
+  import { getDocument } from "../../lib/firebase/firestore";
+  import { getEffectiveDomain } from "../../lib/domain-check";
+  import { getSiteByOwnerId } from "../../lib/site";
+
+  const loadingState = document.getElementById("loading-state");
+  const unauthenticatedState = document.getElementById("unauthenticated-state");
+  const authenticatedState = document.getElementById("authenticated-state");
+  const noSiteState = document.getElementById("no-site-state");
+  const btnLogout = document.getElementById("btn-logout");
+  const btnLogoutNoSite = document.getElementById("btn-logout-no-site");
+  const btnRefresh = document.getElementById("btn-refresh");
+  const adminApp = document.getElementById("admin-app");
+
+  const domain = getEffectiveDomain();
+
+  // Variable global para que las páginas hijas puedan acceder al siteDomain
+  let currentSiteDomain: string | null = null;
+  let currentSiteData: any = null;
+
+  /**
+   * Verifica si el usuario tiene un sitio registrado.
+   * Busca por ownerId (funciona desde cualquier navegador/sesión).
+   * Solo como optimización, intenta primero por dominio actual.
+   * Devuelve el dominio del sitio encontrado, o null si no tiene sitio.
+   */
+  async function checkUserSite(uid: string): Promise<string | null> {
+    // 1. Intentar por dominio actual (optimización: evita query si el sitio está en el dominio actual)
+    try {
+      const result = await getDocument("sites", domain);
+      if (result.success && result.data) {
+        const site = result.data as any;
+        if (site.ownerId === uid || (site.roles && site.roles[uid])) {
+          return domain;
+        }
+      }
+    } catch {
+      // Ignorar error, continuar con búsqueda por ownerId
+    }
+
+    // 2. Buscar por ownerId (funciona desde cualquier navegador/sesión)
+    try {
+      const site = await getSiteByOwnerId(uid);
+      if (site) {
+        return site.domain;
+      }
+    } catch {
+      // Ignorar error
+    }
+
+    return null;
+  }
+
+  /**
+   * Muestra el estado correspondiente según autenticación
+   */
+  function showState(state: "loading" | "unauthenticated" | "authenticated" | "no-site", siteDomain?: string, siteData?: any) {
+    loadingState?.classList.add("hidden");
+    unauthenticatedState?.classList.add("hidden");
+    authenticatedState?.classList.add("hidden");
+    noSiteState?.classList.add("hidden");
+
+    switch (state) {
+      case "loading":
+        loadingState?.classList.remove("hidden");
+        break;
+      case "unauthenticated":
+        unauthenticatedState?.classList.remove("hidden");
+        break;
+      case "authenticated":
+        authenticatedState?.classList.remove("hidden");
+        currentSiteDomain = siteDomain || null;
+        currentSiteData = siteData || null;
+        // Exponer en el DOM para que las páginas hijas lo lean
+        if (adminApp) {
+          if (currentSiteDomain) adminApp.dataset.siteDomain = currentSiteDomain;
+          if (currentSiteData) adminApp.dataset.siteData = JSON.stringify(currentSiteData);
+        }
+        // Disparar evento para que las páginas hijas sepan que ya hay datos
+        window.dispatchEvent(new CustomEvent("admin:ready", {
+          detail: { siteDomain: currentSiteDomain, siteData: currentSiteData }
+        }));
+        break;
+      case "no-site":
+        noSiteState?.classList.remove("hidden");
+        break;
+    }
+  }
+
+  // --- Observar cambios de autenticación ---
+  onAuthChange(async (user) => {
+    if (!user) {
+      showState("unauthenticated");
+      return;
+    }
+
+    // Usuario autenticado: verificar si tiene sitio (con fallback por ownerId)
+    const siteDomain = await checkUserSite(user.uid);
+    if (siteDomain) {
+      // Cargar datos completos del sitio
+      try {
+        const result = await getDocument("sites", siteDomain);
+        if (result.success && result.data) {
+          showState("authenticated", siteDomain, result.data);
+        } else {
+          showState("authenticated", siteDomain);
+        }
+      } catch {
+        showState("authenticated", siteDomain);
+      }
+    } else {
+      showState("no-site");
+    }
+  });
+
+  // --- Cerrar sesión ---
+  async function handleLogout() {
+    try {
+      await logoutUser();
+      showState("unauthenticated");
+    } catch {
+      console.error("Error al cerrar sesión");
+    }
+  }
+
+  btnLogout?.addEventListener("click", handleLogout);
+  btnLogoutNoSite?.addEventListener("click", handleLogout);
+
+  // --- Recargar página ---
+  btnRefresh?.addEventListener("click", () => {
+    window.location.reload();
+  });
+</script>

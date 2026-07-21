@@ -1,0 +1,113 @@
+---
+import Layout from "../layouts/Layout.astro";
+import OnboardingWizard from "../components/admin/OnboardingWizard.astro";
+import PublicLayout from "../components/public/PublicLayout.astro";
+import DevTools from "../components/devtools/DevTools.astro";
+---
+
+<Layout title="Inicio">
+  <div id="loading">
+    <p>Cargando...</p>
+  </div>
+
+  <div id="onboarding" class="hidden">
+    <OnboardingWizard domain="" />
+  </div>
+
+  <div id="home-page" class="hidden">
+    <PublicLayout
+      site={{
+        id: "",
+        domain: "",
+        siteName: "",
+        siteDescription: "",
+        status: "pending",
+      }}
+    />
+  </div>
+
+  <DevTools />
+</Layout>
+
+<script>
+  import { getEffectiveDomain } from "../lib/domain-check";
+  import { getSiteData, getSiteByOwnerId } from "../lib/site";
+  import type { SiteData } from "../lib/site";
+  import { onAuthStateChanged } from "firebase/auth";
+  import { auth } from "../lib/firebase";
+
+  const loading = document.getElementById("loading");
+  const onboarding = document.getElementById("onboarding");
+  const homePage = document.getElementById("home-page");
+
+  /**
+   * Muestra el PublicLayout con los datos completos del sitio
+   */
+  function showHomePage(site: SiteData) {
+    const el = homePage?.querySelector("public-layout");
+    if (el) {
+      (el as any).site = site;
+    }
+    homePage?.classList.remove("hidden");
+  }
+
+  /**
+   * Muestra el onboarding con el dominio pre-cargado
+   */
+  function showOnboarding(domain: string) {
+    const el = onboarding?.querySelector("onboarding-wizard");
+    if (el) {
+      el.setAttribute("domain", domain);
+      const container = el.querySelector(".onboarding-container");
+      if (container) {
+        container.setAttribute("data-domain", domain);
+      }
+    }
+    onboarding?.classList.remove("hidden");
+  }
+
+  async function init() {
+    // Obtener el dominio efectivo (considera DevTools, localhost, etc.)
+    const domain = getEffectiveDomain();
+
+    // 1. Intentar buscar el sitio por dominio
+    let site = await getSiteData(domain);
+
+    // 2. Si no se encontró y estamos en localhost, probar variantes comunes
+    if (!site && (domain === "localhost" || domain === "127.0.0.1")) {
+      // 2a. Intentar con "localhost.com" (dominio común en desarrollo)
+      site = await getSiteData("localhost.com");
+
+      // 2b. Si aún no, intentar buscar por ownerId del usuario autenticado
+      if (!site) {
+        site = await new Promise((resolve) => {
+          const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            unsubscribe();
+            if (user) {
+              const siteByOwner = await getSiteByOwnerId(user.uid);
+              resolve(siteByOwner);
+            } else {
+              resolve(null);
+            }
+          });
+        });
+      }
+    }
+
+    loading?.classList.add("hidden");
+
+    if (site) {
+      showHomePage(site);
+    } else {
+      showOnboarding(domain);
+    }
+  }
+
+  init();
+</script>
+
+<style>
+  .hidden {
+    display: none;
+  }
+</style>

@@ -1,0 +1,161 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // Funciones auxiliares
+    // ============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserUid() {
+      return request.auth.uid;
+    }
+
+    // Obtiene el rol de un usuario dentro de un sitio específico
+    function getSiteRole(siteId) {
+      return get(/databases/$(database)/documents/sites/$(siteId)).data.roles[getUserUid()];
+    }
+
+    // Verifica si el usuario tiene un rol específico (o superior) en el sitio
+    function hasRole(siteId, requiredRole) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/sites/$(siteId))
+        && getSiteRole(siteId) in ['admin', 'editor', 'user']
+        && (
+          (requiredRole == 'user') ||  // user puede hacer lo de user
+          (requiredRole == 'editor' && getSiteRole(siteId) in ['editor', 'admin']) ||  // editor puede hacer lo de editor y admin también
+          (requiredRole == 'admin' && getSiteRole(siteId) == 'admin')  // solo admin
+        );
+    }
+
+    // Verifica si el usuario es admin global (superadmin)
+    function isGlobalAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin/users/$(getUserUid()))
+        && get(/databases/$(database)/documents/admin/users/$(getUserUid())).data.role == 'superadmin';
+    }
+
+    // ============================================================
+    // Colección: sites/{domain}
+    // Cada sitio es un documento cuyo ID es el dominio
+    // ============================================================
+    match /sites/{domain} {
+
+      // --- Lectura ---
+      // Público: puede leer sitios activos
+      // Miembros del sitio: pueden leer siempre
+      // Admin global: puede leer todo
+      allow read: if resource.data.status == 'active'
+        || hasRole(domain, 'user')
+        || isGlobalAdmin();
+
+      // --- Creación ---
+      // Solo autenticado, y el ownerId debe ser el propio usuario
+      // Además, el dominio no debe existir (se verifica con resource == null)
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == getUserUid()
+        && request.resource.data.roles[getUserUid()] == 'admin'
+        && request.resource.data.status in ['active', 'pending'];
+
+      // --- Actualización ---
+      // Solo el admin del sitio o admin global
+      allow update: if hasRole(domain, 'admin') || isGlobalAdmin();
+
+      // --- Eliminación ---
+      // Solo admin global
+      allow delete: if isGlobalAdmin();
+
+      // ============================================================
+      // Subcolección: sites/{domain}/settings
+      // Configuración del sitio (nombre, descripción, SEO, etc.)
+      // ============================================================
+      match /settings/{settingId} {
+
+        // Público: puede leer settings generales
+        // Miembros: pueden leer
+        allow read: if true;
+
+        // Solo admin del sitio o admin global
+        allow write: if hasRole(domain, 'admin') || isGlobalAdmin();
+      }
+
+      // ============================================================
+      // Subcolección: sites/{domain}/posts
+      // Contenido del sitio (blog posts, páginas, etc.)
+      // ============================================================
+      match /posts/{postId} {
+
+        // Público: solo posts publicados
+        // Miembros del sitio: pueden leer todos (incluyendo borradores)
+        // Admin global: puede leer todo
+        allow read: if resource.data.published == true
+          || hasRole(domain, 'user')
+          || isGlobalAdmin();
+
+        // Creación: cualquier miembro del sitio (user, editor, admin)
+        allow create: if hasRole(domain, 'user');
+
+        // Actualización: el autor, editor, admin del sitio, o admin global
+        allow update: if hasRole(domain, 'editor')
+          || (hasRole(domain, 'user') && resource.data.authorId == getUserUid())
+          || isGlobalAdmin();
+
+        // Eliminación: admin del sitio o admin global
+        allow delete: if hasRole(domain, 'admin') || isGlobalAdmin();
+      }
+
+      // ============================================================
+      // Subcolección: sites/{domain}/members
+      // Miembros del sitio con sus roles
+      // ============================================================
+      match /members/{userId} {
+
+        // Cualquier miembro puede leer la lista de miembros
+        allow read: if hasRole(domain, 'user');
+
+        // Solo admin del sitio puede gestionar miembros
+        allow write: if hasRole(domain, 'admin');
+      }
+    }
+
+    // ============================================================
+    // Colección: admin (solo accesible para superadmins)
+    // ============================================================
+    match /admin/{document=**} {
+      allow read, write: if isGlobalAdmin();
+    }
+
+    // ============================================================
+    // Colección: users (perfiles públicos de usuarios)
+    // ============================================================
+    match /users/{userId} {
+      // Cualquiera puede leer perfiles básicos
+      allow read: if true;
+
+      // Solo el propio usuario puede crear/actualizar su perfil
+      allow create: if isAuthenticated() && request.resource.data.uid == getUserUid();
+      allow update: if isAuthenticated() && resource.data.uid == getUserUid();
+      allow delete: if isGlobalAdmin();
+    }
+
+    // ============================================================
+    // Colección: media (archivos públicos)
+    // ============================================================
+    match /media/{mediaId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isGlobalAdmin();
+    }
+
+    // ============================================================
+    // Denegar todo lo demás por defecto
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
