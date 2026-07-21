@@ -106,13 +106,39 @@ El contenedor `#admin-app` expone:
 
 ---
 
-## 🚀 Próximas Features (Sección Pública)
+## 🚀 Próximas Features
 
-Ideas para futuras iteraciones:
+### Sector Admin — Perfil y Gestión de Usuarios
+
+Estrategia documentada en `docs/admin-profile-users-strategy.md`.
+
+- [ ] **Fase 1: Perfil de Usuario** (`/admin/profile`)
+  - [ ] Crear `src/pages/admin/profile.astro`
+  - [ ] Crear `src/components/admin/UserProfile.ts`
+  - [ ] Añadir traducciones de perfil en `admin.ts`
+  - [ ] Añadir enlace "Perfil" en `AdminLayout.astro`
+  - [ ] Build y verificar
+
+- [ ] **Fase 2: Gestión de Usuarios** (`/admin/users`)
+  - [ ] Crear `src/pages/admin/users.astro`
+  - [ ] Crear `src/components/admin/UserManager.ts`
+  - [ ] Añadir traducciones de usuarios en `admin.ts`
+  - [ ] Añadir enlace "Usuarios" en `AdminLayout.astro`
+  - [ ] Build y verificar
+
+- [ ] **Fase 3: Permisos y Roles**
+  - [ ] Implementar detección de rol del usuario en AdminLayout
+  - [ ] Mostrar/ocultar enlaces según rol
+  - [ ] Validar permisos en UserManager
+  - [ ] Build y verificar
+
+- [ ] **Documentación**
+  - [ ] Actualizar `firestore.rules` si es necesario
+
+### Sector Public — Ideas para futuras iteraciones
 
 - [ ] **Página 404 personalizada** con datos del sitio
 - [ ] **Modo oscuro** basado en `theme`
 - [ ] **Analytics** básico (contador de visitas)
 - [ ] **Blog público** (consumir desde Firestore)
 - [ ] **Caché de SiteData** para reducir lecturas a Firestore
-- [ ] **Soporte para múltiples páginas** (routing dinámico desde navLinks)
