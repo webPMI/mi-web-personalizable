@@ -5,6 +5,7 @@
 //
 // Siempre se muestra con el nombre del sitio.
 // Opcionalmente renderiza enlaces del navbar.
+// Usa variables CSS del tema: --footer-bg, --footer-text, --accent
 //
 // Props: siteName, navLinks
 // ============================================
@@ -41,8 +42,8 @@ const currentYear = new Date().getFullYear();
 
 <style>
     .footer {
-        background: #1a1a2e;
-        color: #e5e7eb;
+        background: var(--footer-bg, #1e1b4b);
+        color: var(--footer-text, #e0e7ff);
         padding: 2rem 0;
     }
     .footer-inner {
@@ -61,11 +62,13 @@ const currentYear = new Date().getFullYear();
     }
     .footer-link {
         font-size: 0.875rem;
-        color: #9ca3af;
-        transition: color 0.2s;
+        color: var(--footer-text, #9ca3af);
+        opacity: var(--footer-link-opacity, 0.7);
+        transition: color 0.2s, opacity 0.2s;
     }
     .footer-link:hover {
-        color: #ffffff;
+        color: var(--accent, #ffffff);
+        opacity: 1;
         text-decoration: none;
     }
 

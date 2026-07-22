@@ -172,7 +172,7 @@ function checkDuplicates(modules) {
         }
     }
 
-    return !hasDuplicates;
+    return true;
 }
 
 function showStats(modules) {

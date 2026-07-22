@@ -1,0 +1,108 @@
+---
+// ============================================
+// /admin/users — Gestión de Usuarios del Sitio
+// ============================================
+// Permite al administrador del sitio gestionar
+// los miembros asociados a su sitio.
+// ============================================
+
+import AdminLayout from "../../components/admin/AdminLayout.astro";
+---
+
+<AdminLayout>
+  <div class="card">
+    <div class="card-header" data-i18n="title-users">Usuarios del Sitio</div>
+    <p class="text-muted" data-i18n="desc-users">Gestiona los miembros que tienen acceso a este sitio.</p>
+
+    <!-- Barra de herramientas: búsqueda + botones -->
+    <div class="users-toolbar">
+      <div class="users-search-wrap">
+        <input type="text" id="users-search" class="form-input" placeholder="Buscar por nombre o email..." data-i18n-placeholder="users-placeholder-search" />
+        <span class="users-search-icon">🔍</span>
+      </div>
+      <div class="users-toolbar-actions">
+        <button type="button" id="btn-refresh-users" class="btn btn-secondary" data-i18n="users-btn-refresh" title="Recargar lista">
+          ↻ Recargar
+        </button>
+        <button type="button" id="btn-invite-user" class="btn btn-primary hidden" data-i18n="users-btn-invite">
+          + Invitar miembro
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulario de invitación (oculto por defecto) -->
+    <div id="invite-form-container" class="hidden mt-md" style="max-width: 480px;">
+      <h3 class="section-title" data-i18n="invite-title">Invitar nuevo miembro</h3>
+
+      <div class="form-group" id="fg-invite-email">
+        <label for="invite-email" data-i18n="invite-label-email">Email del invitado</label>
+        <input type="email" id="invite-email" placeholder="correo@ejemplo.com" data-i18n-placeholder="invite-placeholder-email" />
+        <p class="field-error hidden" id="invite-email-error">El email es obligatorio.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="invite-role" data-i18n="invite-label-role">Rol</label>
+        <select id="invite-role">
+          <option value="admin" data-i18n="role-admin">Admin</option>
+          <option value="editor" selected data-i18n="role-editor">Editor</option>
+          <option value="viewer" data-i18n="role-viewer">Viewer</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: var(--space-sm);">
+        <button type="button" id="btn-invite-send" class="btn btn-primary" data-i18n="invite-btn-send">Enviar invitación</button>
+        <button type="button" id="btn-invite-cancel" class="btn btn-secondary" data-i18n="invite-btn-cancel">Cancelar</button>
+      </div>
+
+      <div id="invite-feedback" class="hidden mt-sm"></div>
+    </div>
+
+    <!-- Contador de miembros -->
+    <div id="users-count" class="users-count hidden">
+      <span id="users-count-value">0</span> <span data-i18n="users-count-label">miembro(s)</span>
+    </div>
+
+    <!-- Tabla de miembros -->
+    <div id="users-table-container">
+      <div class="table-responsive">
+        <table class="table" id="users-table">
+          <thead>
+            <tr>
+              <th data-i18n="users-table-user">Usuario</th>
+              <th data-i18n="users-table-email">Email</th>
+              <th data-i18n="users-table-role">Rol</th>
+              <th data-i18n="users-table-status">Estado</th>
+              <th data-i18n="users-table-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <!-- Se renderiza desde JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div id="users-pagination" class="users-pagination hidden">
+      <!-- Se renderiza desde JS -->
+    </div>
+
+    <!-- Estado vacío -->
+    <div id="users-empty" class="hidden text-center mt-lg">
+      <p class="text-muted" data-i18n="users-empty">No hay miembros registrados en este sitio.</p>
+    </div>
+
+    <!-- Feedback general -->
+    <div id="users-feedback" class="hidden mt-md"></div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div id="users-loading" class="text-muted" data-i18n="users-loading">
+    Cargando miembros...
+  </div>
+</AdminLayout>
+
+<script>
+  import { initUserManager } from "../../components/admin/UserManager";
+  initUserManager();
+</script>

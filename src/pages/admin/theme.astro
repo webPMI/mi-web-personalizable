@@ -1,0 +1,380 @@
+---
+// ============================================
+// /admin/theme — Personalización del Tema Visual
+// ============================================
+// Página dedicada exclusivamente a la configuración
+// del tema de la web pública. Usa AdminLayout.
+// ============================================
+
+import AdminLayout from "../../components/admin/AdminLayout.astro";
+---
+
+<AdminLayout>
+  <div class="card">
+    <div class="card-header">Personalizar Tema</div>
+    <p class="text-muted">Configura todos los aspectos visuales de tu sitio web público.</p>
+
+    <form id="theme-form">
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Colores -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Colores</h3>
+      <p class="text-muted section-desc">Define la paleta de colores de tu sitio.</p>
+
+      <div class="theme-grid">
+        <div class="form-group">
+          <label for="color-primary">Color primario</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-primary-picker" class="color-swatch" value="#6366f1" />
+            <input type="text" id="color-primary" class="color-hex" placeholder="#6366f1" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-secondary">Color secundario</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-secondary-picker" class="color-swatch" value="#8b5cf6" />
+            <input type="text" id="color-secondary" class="color-hex" placeholder="#8b5cf6" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-accent">Color de acento (botones, enlaces)</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-accent-picker" class="color-swatch" value="#4f46e5" />
+            <input type="text" id="color-accent" class="color-hex" placeholder="#4f46e5" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-bg">Color de fondo</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-bg-picker" class="color-swatch" value="#ffffff" />
+            <input type="text" id="color-bg" class="color-hex" placeholder="#ffffff" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-text">Color de texto</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-text-picker" class="color-swatch" value="#1a1a2e" />
+            <input type="text" id="color-text" class="color-hex" placeholder="#1a1a2e" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-text-muted">Color de texto secundario</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-text-muted-picker" class="color-swatch" value="#6b7280" />
+            <input type="text" id="color-text-muted" class="color-hex" placeholder="#6b7280" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-navbar-bg">Fondo del navbar</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-navbar-bg-picker" class="color-swatch" value="#ffffff" />
+            <input type="text" id="color-navbar-bg" class="color-hex" placeholder="#ffffff" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-navbar-text">Texto del navbar</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-navbar-text-picker" class="color-swatch" value="#1a1a2e" />
+            <input type="text" id="color-navbar-text" class="color-hex" placeholder="#1a1a2e" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-footer-bg">Fondo del footer</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-footer-bg-picker" class="color-swatch" value="#1e1b4b" />
+            <input type="text" id="color-footer-bg" class="color-hex" placeholder="#1e1b4b" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="color-footer-text">Texto del footer</label>
+          <div class="color-picker-row">
+            <input type="color" id="color-footer-text-picker" class="color-swatch" value="#e0e7ff" />
+            <input type="text" id="color-footer-text" class="color-hex" placeholder="#e0e7ff" maxlength="7" />
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Tipografía -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Tipografía</h3>
+      <p class="text-muted section-desc">Elige las fuentes y el tamaño base del texto.</p>
+
+      <div class="theme-grid">
+        <div class="form-group">
+          <label for="font-family">Fuente principal</label>
+          <select id="font-family" class="font-select">
+            <option value="'Inter', system-ui, sans-serif">Inter (moderna)</option>
+            <option value="'Roboto', system-ui, sans-serif">Roboto</option>
+            <option value="'Open Sans', system-ui, sans-serif">Open Sans</option>
+            <option value="'Lato', system-ui, sans-serif">Lato</option>
+            <option value="'Poppins', system-ui, sans-serif">Poppins</option>
+            <option value="'Montserrat', system-ui, sans-serif">Montserrat</option>
+            <option value="'Nunito', system-ui, sans-serif">Nunito</option>
+            <option value="'Merriweather', Georgia, serif">Merriweather (serif)</option>
+            <option value="'Playfair Display', Georgia, serif">Playfair Display (serif)</option>
+            <option value="'Source Code Pro', monospace">Source Code Pro (mono)</option>
+            <option value="system-ui, sans-serif">Sistema (default)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="font-headings">Fuente para títulos</label>
+          <select id="font-headings" class="font-select">
+            <option value="">Igual que la principal</option>
+            <option value="'Inter', system-ui, sans-serif">Inter</option>
+            <option value="'Roboto', system-ui, sans-serif">Roboto</option>
+            <option value="'Poppins', system-ui, sans-serif">Poppins</option>
+            <option value="'Montserrat', system-ui, sans-serif">Montserrat</option>
+            <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+            <option value="'Merriweather', Georgia, serif">Merriweather</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="font-size-base">Tamaño base de fuente (px)</label>
+          <input type="range" id="font-size-base" class="range-slider" min="14" max="20" step="1" value="16" />
+          <div class="range-labels">
+            <span>14px</span>
+            <span id="font-size-display">16px</span>
+            <span>20px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="font-weight">Grosor de fuente</label>
+          <select id="font-weight">
+            <option value="300">Light (300)</option>
+            <option value="400" selected>Normal (400)</option>
+            <option value="500">Medium (500)</option>
+            <option value="600">Semi-bold (600)</option>
+          </select>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Espaciado y Layout -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Espaciado y Layout</h3>
+      <p class="text-muted section-desc">Controla la estructura y los espacios del sitio.</p>
+
+      <div class="theme-grid">
+        <div class="form-group">
+          <label for="theme-layout">Diseño</label>
+          <select id="theme-layout">
+            <option value="centered">Centrado</option>
+            <option value="full-width">Ancho completo</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="max-width">Ancho máximo del contenedor (px)</label>
+          <input type="range" id="max-width" class="range-slider" min="800" max="1400" step="50" value="1200" />
+          <div class="range-labels">
+            <span>800px</span>
+            <span id="max-width-display">1200px</span>
+            <span>1400px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="section-gap">Espaciado entre secciones (px)</label>
+          <input type="range" id="section-gap" class="range-slider" min="32" max="128" step="8" value="64" />
+          <div class="range-labels">
+            <span>32px</span>
+            <span id="section-gap-display">64px</span>
+            <span>128px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="border-radius">Radio de bordes general (px)</label>
+          <input type="range" id="border-radius" class="range-slider" min="0" max="24" step="2" value="8" />
+          <div class="range-labels">
+            <span>0px</span>
+            <span id="border-radius-display">8px</span>
+            <span>24px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="container-padding">Padding del contenedor (px)</label>
+          <input type="range" id="container-padding" class="range-slider" min="8" max="48" step="4" value="24" />
+          <div class="range-labels">
+            <span>8px</span>
+            <span id="container-padding-display">24px</span>
+            <span>48px</span>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Hero -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Hero (Portada)</h3>
+      <p class="text-muted section-desc">Personaliza la apariencia de la sección principal.</p>
+
+      <div class="theme-grid">
+        <div class="form-group">
+          <label for="hero-height">Altura del hero</label>
+          <select id="hero-height">
+            <option value="small">Pequeño (~300px)</option>
+            <option value="medium" selected>Mediano (~450px)</option>
+            <option value="large">Grande (~600px)</option>
+            <option value="fullscreen">Pantalla completa</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="hero-align">Alineación del texto</label>
+          <select id="hero-align">
+            <option value="center" selected>Centrado</option>
+            <option value="left">Izquierda</option>
+            <option value="right">Derecha</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="hero-overlay-color">Color de superposición (overlay)</label>
+          <div class="color-picker-row">
+            <input type="color" id="hero-overlay-color-picker" class="color-swatch" value="#000000" />
+            <input type="text" id="hero-overlay-color" class="color-hex" placeholder="#000000" maxlength="7" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="hero-overlay-opacity">Opacidad de la superposición</label>
+          <input type="range" id="hero-overlay-opacity" class="range-slider" min="0" max="100" step="5" value="40" />
+          <div class="range-labels">
+            <span>0%</span>
+            <span id="hero-overlay-opacity-display">40%</span>
+            <span>100%</span>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- SECCIÓN: Botones -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Botones</h3>
+      <p class="text-muted section-desc">Define el estilo de los botones en todo el sitio.</p>
+
+      <div class="theme-grid">
+        <div class="form-group">
+          <label for="btn-border-radius">Radio de bordes de botones (px)</label>
+          <input type="range" id="btn-border-radius" class="range-slider" min="0" max="24" step="2" value="6" />
+          <div class="range-labels">
+            <span>0px</span>
+            <span id="btn-border-radius-display">6px</span>
+            <span>24px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="btn-padding-x">Padding horizontal de botones (px)</label>
+          <input type="range" id="btn-padding-x" class="range-slider" min="8" max="40" step="4" value="24" />
+          <div class="range-labels">
+            <span>8px</span>
+            <span id="btn-padding-x-display">24px</span>
+            <span>40px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="btn-padding-y">Padding vertical de botones (px)</label>
+          <input type="range" id="btn-padding-y" class="range-slider" min="4" max="20" step="2" value="12" />
+          <div class="range-labels">
+            <span>4px</span>
+            <span id="btn-padding-y-display">12px</span>
+            <span>20px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="btn-style">Estilo de botones</label>
+          <select id="btn-style">
+            <option value="filled" selected>Relleno (filled)</option>
+            <option value="outline">Contorno (outline)</option>
+            <option value="ghost">Fantasma (ghost)</option>
+          </select>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- ============================================ -->
+      <!-- Vista previa en vivo -->
+      <!-- ============================================ -->
+      <h3 class="section-title">Vista previa</h3>
+      <p class="text-muted section-desc">Así se verá tu sitio con la configuración actual.</p>
+
+      <div class="theme-preview" id="theme-preview">
+        <div class="preview-navbar" id="preview-navbar">
+          <span class="preview-logo" id="preview-logo">Mi Sitio</span>
+          <div class="preview-nav-links">
+            <a href="#" class="preview-nav-link">Inicio</a>
+            <a href="#" class="preview-nav-link">Servicios</a>
+            <a href="#" class="preview-nav-link">Contacto</a>
+          </div>
+        </div>
+
+        <div class="preview-hero" id="preview-hero">
+          <div class="preview-hero-overlay" id="preview-hero-overlay"></div>
+          <div class="preview-hero-content" id="preview-hero-content">
+            <h2 class="preview-hero-title">Bienvenido a mi sitio</h2>
+            <p class="preview-hero-subtitle">Una descripción breve e impactante</p>
+            <button class="preview-btn" id="preview-btn">Comenzar ahora</button>
+          </div>
+        </div>
+
+        <div class="preview-section">
+          <h3>Sección de ejemplo</h3>
+          <p>Este es un párrafo de ejemplo para mostrar cómo se verá el texto en tu sitio. Los colores, fuentes y espaciados se actualizan en tiempo real.</p>
+          <button class="preview-btn" id="preview-btn-secondary">Botón secundario</button>
+        </div>
+
+        <div class="preview-footer" id="preview-footer">
+          <span>© 2026 Mi Sitio. Todos los derechos reservados.</span>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- Feedback -->
+      <div id="save-feedback" class="hidden"></div>
+
+      <!-- Botón guardar -->
+      <button type="submit" id="btn-save" class="btn btn-primary btn-lg">
+        Guardar cambios
+      </button>
+    </form>
+  </div>
+
+  <!-- Estado de carga -->
+  <div id="theme-content">
+    <p class="text-muted">Cargando configuración del tema...</p>
+  </div>
+</AdminLayout>
+
+<script>
+  import { initThemeConfig } from "../../components/admin/ThemeConfig";
+  initThemeConfig();
+</script>

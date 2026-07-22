@@ -1,0 +1,39 @@
+# ============================================
+# wrangler.toml — Configuración de Cloudflare
+# ============================================
+# Este archivo configura los bindings para
+# D1 (base de datos SQL) y R2 (almacenamiento).
+#
+# Comandos útiles:
+#   npx wrangler d1 create mi-web-personalizable-db
+#   npx wrangler d1 execute mi-web-personalizable-db --file=./src/lib/d1/schema.sql
+#   npx wrangler r2 bucket create mi-web-personalizable-assets
+# ============================================
+
+name = "mi-web-personalizable"
+compatibility_date = "2026-07-22"
+compatibility_flags = ["nodejs_compat"]
+
+# ============================================
+# D1 Database
+# ============================================
+# Creado con: npx wrangler d1 create mi-web-personalizable-db
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "mi-web-personalizable-db"
+# database_id = "<DB_ID>"
+
+# ============================================
+# R2 Bucket
+# ============================================
+# Creado con: npx wrangler r2 bucket create mi-web-personalizable-assets
+# [[r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "mi-web-personalizable-assets"
+
+# ============================================
+# Variables de entorno (producción)
+# ============================================
+# [vars]
+# CLOUDFLARE_ACCOUNT_ID = "<ACCOUNT_ID>"
+# R2_PUBLIC_URL = "https://pub-<HASH>.r2.dev"

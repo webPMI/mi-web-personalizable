@@ -12,14 +12,31 @@ export interface Site {
 }
 
 /**
+ * Normaliza un dominio quitando espacios en blanco, protocol esquemas (http/https)
+ * y convirtiendo el string a minúsculas.
+ *
+ * @param domain - El dominio a normalizar (ej: "  https://MiDominio.Com/ " -> "midominio.com")
+ */
+export function normalizeDomain(domain: string): string {
+  if (!domain) return "";
+  let clean = domain.trim().toLowerCase();
+  clean = clean.replace(/^(https?:\/\/)/, "");
+  clean = clean.replace(/\/.*$/, "");
+  return clean;
+}
+
+/**
  * Comprueba si un dominio está registrado en Firestore.
- * Ahora usa getDoc directo porque el dominio es el ID del documento.
+ * Usa getDoc directo normalizando el dominio recibido.
  * @param domain - El dominio a buscar (ej: "midominio.com")
  * @returns El sitio si existe, o null si no está registrado
  */
 export async function checkDomain(domain: string): Promise<Site | null> {
   try {
-    const docRef = doc(db, "sites", domain);
+    const cleanDomain = normalizeDomain(domain);
+    if (!cleanDomain) return null;
+
+    const docRef = doc(db, "sites", cleanDomain);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -38,7 +55,7 @@ export async function checkDomain(domain: string): Promise<Site | null> {
  */
 export function getCurrentDomain(): string {
   if (typeof window === "undefined") return "";
-  return window.location.hostname;
+  return normalizeDomain(window.location.hostname);
 }
 
 /**
@@ -46,39 +63,42 @@ export function getCurrentDomain(): string {
  * 1. Dominio registrado recién creado (sessionStorage "registered-domain")
  * 2. Dominio simulado desde DevTools (sessionStorage "devtools-domain")
  * 3. Dominio real desde window.location
- * 4. Fallback a "localhost"
+ * 4. Fallback a "localhost.com"
  *
  * Esta es la función centralizada que deben usar todos los componentes.
  */
 export function getEffectiveDomain(): string {
   // 1. Prioridad máxima: dominio registrado en el onboarding (recién creado)
   const registeredDomain = getRegisteredDomain();
-  if (registeredDomain) return registeredDomain;
+  if (registeredDomain) return normalizeDomain(registeredDomain);
 
   // 2. Prioridad: dominio simulado desde DevTools
   const devDomain = getDevToolsDomain();
-  if (devDomain) return devDomain;
+  if (devDomain) return normalizeDomain(devDomain);
 
   // 3. Dominio real desde window.location
   const realDomain = getCurrentDomain();
 
-  // 4. Si está vacío, retornar "localhost"
-  if (!realDomain || realDomain === "") return "localhost";
+  // 4. Si está vacío, retornar "localhost.com"
+  if (!realDomain || realDomain === "") return "localhost.com";
 
-  return realDomain;
+  return normalizeDomain(realDomain);
 }
 
 /**
  * Obtiene el dominio registrado durante el onboarding (sessionStorage)
- * Se limpia automáticamente después de leerlo (one-time use)
+ * Por defecto se limpia automáticamente después de leerlo (one-time use).
+ *
+ * @param clearOnRead - Si es true, borra la clave tras la lectura (por defecto true).
  */
-export function getRegisteredDomain(): string | null {
+export function getRegisteredDomain(clearOnRead = true): string | null {
   try {
     const domain = sessionStorage.getItem("registered-domain");
     if (domain) {
-      // Limpiar para que solo funcione una vez (evitar bucles)
-      sessionStorage.removeItem("registered-domain");
-      return domain;
+      if (clearOnRead) {
+        sessionStorage.removeItem("registered-domain");
+      }
+      return normalizeDomain(domain);
     }
     return null;
   } catch {
@@ -87,11 +107,23 @@ export function getRegisteredDomain(): string | null {
 }
 
 /**
+ * Limpia el dominio registrado de sessionStorage explícitamente
+ */
+export function clearRegisteredDomain(): void {
+  try {
+    sessionStorage.removeItem("registered-domain");
+  } catch {
+    // sessionStorage no disponible
+  }
+}
+
+/**
  * Obtiene el dominio simulado desde DevTools (sessionStorage)
  */
 export function getDevToolsDomain(): string | null {
   try {
-    return sessionStorage.getItem("devtools-domain");
+    const devDomain = sessionStorage.getItem("devtools-domain");
+    return devDomain ? normalizeDomain(devDomain) : null;
   } catch {
     return null;
   }

@@ -18,7 +18,7 @@ export interface Props {
 const { sections } = Astro.props;
 
 const sortedSections = sections
-    ? [...sections].sort((a, b) => a.order - b.order)
+    ? [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     : [];
 ---
 
@@ -55,15 +55,19 @@ const sortedSections = sections
                     <div class="section-gallery">
                         <h2>{section.title}</h2>
                         <div class="gallery-grid">
-                            {section.content.split(",").map((imgUrl) => (
-                                <div class="gallery-item">
-                                    <img
-                                        src={imgUrl.trim()}
-                                        alt=""
-                                        loading="lazy"
-                                    />
-                                </div>
-                            ))}
+                            {(section.content || "")
+                                .split(",")
+                                .map((imgUrl) => imgUrl.trim())
+                                .filter(Boolean)
+                                .map((imgUrl) => (
+                                    <div class="gallery-item">
+                                        <img
+                                            src={imgUrl}
+                                            alt=""
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                ))}
                         </div>
                     </div>
                 )}
@@ -72,17 +76,21 @@ const sortedSections = sections
                     <div class="section-cards">
                         <h2>{section.title}</h2>
                         <div class="cards-grid">
-                            {section.content.split("||").map((card) => {
-                                const [cardTitle, cardDesc] = card
-                                    .split("|")
-                                    .map((s) => s.trim());
-                                return (
-                                    <div class="card">
-                                        <h3>{cardTitle}</h3>
-                                        {cardDesc && <p>{cardDesc}</p>}
-                                    </div>
-                                );
-                            })}
+                            {(section.content || "")
+                                .split("||")
+                                .map((card) => card.trim())
+                                .filter(Boolean)
+                                .map((card) => {
+                                    const [cardTitle, cardDesc] = card
+                                        .split("|")
+                                        .map((s) => s.trim());
+                                    return (
+                                        <div class="card">
+                                            <h3>{cardTitle}</h3>
+                                            {cardDesc && <p>{cardDesc}</p>}
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </div>
                 )}
@@ -93,30 +101,30 @@ const sortedSections = sections
 
 <style>
     .section {
-        padding: 4rem 0;
+        padding: var(--section-gap, 4rem) 0;
     }
     .section:nth-child(even) {
-        background: #f9fafb;
+        background: var(--section-alt-bg, #f9fafb);
     }
     .section h2 {
-        font-size: 2rem;
+        font-size: var(--h2-size, 2rem);
         font-weight: 700;
         margin-bottom: 1.5rem;
-        color: #1a1a2e;
+        color: var(--text, #1a1a2e);
     }
 
     /* Image-Text */
     .section-image-text {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 3rem;
+        gap: var(--section-gap, 3rem);
         align-items: center;
     }
     .section-image-text-content h2 {
         margin-bottom: 1rem;
     }
     .section-image-text-media img {
-        border-radius: 0.75rem;
+        border-radius: var(--border-radius, 0.75rem);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
@@ -128,7 +136,7 @@ const sortedSections = sections
     }
     .gallery-item {
         overflow: hidden;
-        border-radius: 0.5rem;
+        border-radius: var(--border-radius, 0.5rem);
     }
     .gallery-item img {
         width: 100%;
@@ -147,22 +155,22 @@ const sortedSections = sections
         gap: 1.5rem;
     }
     .card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--card-border, #e5e7eb);
+        border-radius: var(--card-radius, 0.75rem);
         padding: 1.5rem;
         transition: box-shadow 0.2s;
     }
     .card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
     }
     .card h3 {
-        font-size: 1.25rem;
+        font-size: var(--h3-size, 1.25rem);
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
     .card p {
-        color: #6b7280;
+        color: var(--text-muted, #6b7280);
         font-size: 0.9375rem;
     }
 

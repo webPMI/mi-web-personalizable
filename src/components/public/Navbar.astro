@@ -4,6 +4,7 @@
 // ============================================
 //
 // Renderiza el navbar solo si hay enlaces.
+// Usa variables CSS del tema: --navbar-bg, --navbar-text, --accent
 // Props: siteName, navLinks
 // ============================================
 
@@ -37,8 +38,8 @@ const displayName = siteName || "Mi Web Personalizable";
 
 <style>
     .navbar {
-        background: #ffffff;
-        border-bottom: 1px solid #e5e7eb;
+        background: var(--navbar-bg, #ffffff);
+        border-bottom: 1px solid var(--navbar-border, #e5e7eb);
         position: sticky;
         top: 0;
         z-index: 100;
@@ -52,11 +53,11 @@ const displayName = siteName || "Mi Web Personalizable";
     .navbar-brand {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1a1a2e;
+        color: var(--navbar-text, #1a1a2e);
     }
     .navbar-brand:hover {
         text-decoration: none;
-        color: var(--primary);
+        color: var(--accent, #4f46e5);
     }
     .navbar-links {
         display: flex;
@@ -64,11 +65,13 @@ const displayName = siteName || "Mi Web Personalizable";
     }
     .navbar-link {
         font-size: 0.9375rem;
-        color: #4b5563;
-        transition: color 0.2s;
+        color: var(--navbar-text, #4b5563);
+        opacity: var(--navbar-link-opacity, 0.8);
+        transition: color 0.2s, opacity 0.2s;
     }
     .navbar-link:hover {
-        color: var(--primary);
+        color: var(--accent, #4f46e5);
+        opacity: 1;
         text-decoration: none;
     }
 

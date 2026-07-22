@@ -1,9 +1,10 @@
 # 📋 Task List - mi-web-personalizable
 
 > Checklist de tareas pendientes y plan de desarrollo.
-> **Dos agentes trabajando en paralelo:**
-> - **Agent Sector Public** (actual) → Sección pública del sitio
-> - **Agent Sector Admin** → Panel de administración
+> **Tres agentes trabajando en paralelo:**
+> - **Agent Sector Public** → Sección pública del sitio (`/`, `PublicLayout`)
+> - **Agent Sector Admin** → Panel de administración (`/admin`, `/admin/config`, `/admin/profile`, `/admin/users`)
+> - **Agent Sector QA** → Suite de pruebas, sanitización, seguridad y auditoría sintética (`tests/`, `npm run qa`)
 > Generado: Julio 2026
 
 ---
@@ -46,9 +47,30 @@
 - [x] Eliminar archivos obsoletos (`PublicPage.astro`, `HomePage.astro`)
 - [x] Build exitoso — 3 páginas generadas sin errores
 
+### Fase 6: Infraestructura de Testing, Sanitización y QA Sintético (Agent Sector QA)
+- [x] Instalación y configuración de Vitest + jsdom (`vitest.config.ts`, `tests/setup.ts`)
+- [x] Creación del ejecutor sintético token-efficient `scripts/qa-runner.mjs` (`npm run qa`)
+- [x] Creación del módulo central de sanitización `src/lib/sanitizer.ts` (`sanitizeUrl`, `escapeAttribute`, `sanitizeText`, `sanitizeSiteData`)
+- [x] Corrección defensiva de Firestore (`sanitizeData` contra valores `undefined`)
+- [x] Normalización de dominios `normalizeDomain` en `domain-check.ts` y `site.ts`
+- [x] Creación de la Skill del Agente QA en `.agents/skills/qa-auditor/SKILL.md`
+- [x] Creación de suite con **54 pruebas unitarias en 9 archivos de test** (`tests/`)
+- [x] Auditoría QA 100% en verde (`npm run qa`) y build de producción limpio (`npm run build`)
+
+### Fase 7: Personalización Visual del Tema (Theme Config + Public Theme)
+- [x] Crear `src/pages/admin/theme.astro` — Página de personalización del tema en el admin
+- [x] Crear `src/components/admin/ThemeConfig.ts` — Lógica JS: carga, sincronización color picker↔hex, preview en vivo, guardado en Firestore
+- [x] Añadir estilos de theme grid, color pickers, ranges y preview en `src/styles/admin.css`
+- [x] Añadir enlace "Tema" en el sidebar de `AdminLayout.astro`
+- [x] Actualizar `PublicLayout.astro` para exponer todas las variables CSS del tema (colores, tipografía, layout, hero, botones)
+- [x] Actualizar `Navbar.astro` para usar `--navbar-bg`, `--navbar-text`, `--accent`
+- [x] Actualizar `HeroSection.astro` para usar `--hero-height`, `--hero-align`, `--hero-overlay-color`, `--hero-overlay-opacity`, `--btn-*`
+- [x] Actualizar `Footer.astro` para usar `--footer-bg`, `--footer-text`, `--accent`
+- [x] Build exitoso — 6 páginas generadas sin errores
+
 ---
 
-## 📐 Documentación para Ambos Agentes
+## 📐 Documentación para Todos los Agentes
 
 ### Separación de Responsabilidades
 
@@ -58,6 +80,7 @@
 | **Panel admin** (`/admin`, `/admin/config`) | **Sector Admin** | `src/pages/admin/*.astro`, `src/components/admin/*` |
 | **Onboarding** | **Sector Admin** | `src/components/admin/OnboardingWizard.astro`, `src/components/admin/onboarding.ts` |
 | **DevTools** | **Sector Public** | `src/components/devtools/*` |
+| **Testing & QA** | **Sector QA** | `tests/*`, `vitest.config.ts`, `scripts/qa-runner.mjs`, `.agents/skills/qa-auditor/` |
 | **i18n** | **Compartido** | `src/lib/i18n/` — Registrar nuevos módulos según necesidad |
 | **Firebase** | **Compartido** | `src/lib/firebase/` — No modificar sin coordinación |
 
@@ -79,66 +102,85 @@ El contenedor `#admin-app` expone:
 - `data-site-domain` → dominio del sitio
 - `data-site-data` → JSON con todos los datos del sitio
 
-### Archivos que NO debe modificar el Agent Sector Public
-- `src/components/admin/AdminLayout.astro`
-- `src/components/admin/AdminDashboard.ts`
-- `src/components/admin/SiteConfig.ts`
-- `src/pages/admin/index.astro`
-- `src/pages/admin/config.astro`
-- `src/lib/i18n/modules/admin.ts`
+---
 
-### Archivos que NO debe modificar el Agent Sector Admin
-- `src/components/public/PublicLayout.astro`
-- `src/components/devtools/*`
-- `src/lib/site.ts` (solo lectura para conocer SiteData)
+## 📊 Progreso Actual
 
-### Tipos Compartidos
-- **`SiteData`** en `src/lib/site.ts` → Tipo principal para datos del sitio. Usar este para todo.
-- **`SiteSettings`** en `src/types/firebase.ts` → **Deprecated**. Mantenido solo por compatibilidad.
+- **Completado:** 40 tareas (fases 1-7)
+- **Estado de Pruebas:** 115/115 tests en 14 archivos (100% PASS en `npm run qa`)
+- **Estado de Build:** 100% exitoso (`npm run build`)
+
+### 📈 Cobertura de Tests por Módulo
+
+| Módulo | Archivo Test | Tests | Estado |
+|--------|-------------|-------|--------|
+| Sanitizer | `tests/sanitizer.test.ts` | 7 | ✅ |
+| i18n Core | `tests/i18n.test.ts` | 6 | ✅ |
+| i18n Parity | `tests/i18n-parity.test.ts` | 9 | ✅ |
+| i18n Edge Cases | `tests/i18n-edge-cases.test.ts` | 5 | ✅ |
+| Permissions/RBAC | `tests/permissions.test.ts` | 15 | ✅ |
+| Domain Validation | `tests/domain-validation.test.ts` | 9 | ✅ |
+| Domain Check | `tests/domain-check.test.ts` | 5 | ✅ |
+| Cache | `tests/cache.test.ts` | 5 | ✅ |
+| Firestore Helpers | `tests/firestore-helpers.test.ts` | 7 | ✅ |
+| Auth Helpers | `tests/auth-helpers.test.ts` | 3 | ✅ |
+| UI Helpers | `tests/ui-helpers.test.ts` | 3 | ✅ |
+| Theme | `tests/theme.test.ts` | 4 | ✅ |
+| Blocks | `tests/blocks.test.ts` | 17 | ✅ |
+| Pages | `tests/pages.test.ts` | 20 | ✅ |
+
+### ❌ Áreas sin cobertura de tests
+
+| Módulo | Funciones sin test | Prioridad |
+|--------|-------------------|-----------|
+| `src/lib/site.ts` | `getSiteData`, `getPageBySlug`, `listSitePages`, `savePageSubcollection`, `deletePageSubcollection` | ✅ Tests creados (17 tests) |
+| `src/lib/theme.ts` | `applyThemeToElement` (manipulación DOM) | 🟡 Media |
+| `src/lib/domain-check.ts` | `checkDomain`, `getCurrentDomain` | 🟡 Media |
+| `src/lib/cache.ts` | Edge cases: TTL exacto, datos corruptos localStorage | 🟢 Baja |
 
 ---
 
-## 📊 Progreso
+## 🚀 Próximas Features (Checklist Pendiente)
 
-- **Completado:** 24 tareas (fases 1-5)
-- **Pendientes:** Próximas features de la sección pública
-- **Estado actual:** PublicLayout implementado y build exitoso
+### 🔴 Sector Admin — Perfil y Gestión de Usuarios
 
----
+Estrategia detallada en `docs/admin-profile-users-strategy.md`.
 
-## 🚀 Próximas Features
-
-### Sector Admin — Perfil y Gestión de Usuarios
-
-Estrategia documentada en `docs/admin-profile-users-strategy.md`.
-
-- [ ] **Fase 1: Perfil de Usuario** (`/admin/profile`)
-  - [ ] Crear `src/pages/admin/profile.astro`
-  - [ ] Crear `src/components/admin/UserProfile.ts`
-  - [ ] Añadir traducciones de perfil en `admin.ts`
+- [ ] **Fase 1: Perfil de Usuario (`/admin/profile`)**
+  - [ ] Crear vista HTML `src/pages/admin/profile.astro`
+  - [ ] Crear lógica JavaScript `src/components/admin/UserProfile.ts`
+  - [ ] Añadir traducciones de perfil en `src/lib/i18n/modules/admin.ts`
   - [ ] Añadir enlace "Perfil" en `AdminLayout.astro`
-  - [ ] Build y verificar
+  - [ ] Ejecutar `npm run qa` y verificar 0 regresiones
 
-- [ ] **Fase 2: Gestión de Usuarios** (`/admin/users`)
-  - [ ] Crear `src/pages/admin/users.astro`
-  - [ ] Crear `src/components/admin/UserManager.ts`
-  - [ ] Añadir traducciones de usuarios en `admin.ts`
+- [ ] **Fase 2: Gestión de Usuarios del Sitio (`/admin/users`)**
+  - [ ] Crear vista HTML `src/pages/admin/users.astro`
+  - [ ] Crear lógica JavaScript `src/components/admin/UserManager.ts`
+  - [ ] Añadir traducciones de gestión de miembros en `src/lib/i18n/modules/admin.ts`
   - [ ] Añadir enlace "Usuarios" en `AdminLayout.astro`
-  - [ ] Build y verificar
+  - [ ] Ejecutar `npm run qa` y verificar 0 regresiones
 
-- [ ] **Fase 3: Permisos y Roles**
-  - [ ] Implementar detección de rol del usuario en AdminLayout
-  - [ ] Mostrar/ocultar enlaces según rol
-  - [ ] Validar permisos en UserManager
-  - [ ] Build y verificar
+- [ ] **Fase 3: Permisos y Roles (RBAC)**
+  - [ ] Implementar función `loadUserRole()` en `AdminLayout.astro`
+  - [ ] Ocultar o deshabilitar pestañas del panel según rol (`admin`, `editor`, `viewer`)
+  - [ ] Actualizar reglas de Firestore en `firebase/firestore.rules`
+  - [ ] Ejecutar `npm run qa` y verificar 0 regresiones
 
-- [ ] **Documentación**
-  - [ ] Actualizar `firestore.rules` si es necesario
+---
 
-### Sector Public — Ideas para futuras iteraciones
+### 🟢 Sector Public — Próximas Iteraciones
 
-- [ ] **Página 404 personalizada** con datos del sitio
-- [ ] **Modo oscuro** basado en `theme`
-- [ ] **Analytics** básico (contador de visitas)
-- [ ] **Blog público** (consumir desde Firestore)
-- [ ] **Caché de SiteData** para reducir lecturas a Firestore
+- [ ] **Página 404 personalizada** con datos dinámicos del sitio
+- [ ] **Soporte de Modo Oscuro** controlado desde `theme` en Firestore
+- [ ] **Caché de SiteData** (In-memory / Session) para reducir lecturas a Firestore
+- [ ] **Blog Público Dinámico** (consumir entradas desde subcolección Firestore `sites/{domain}/posts`)
+
+---
+
+### 🟡 Sector QA / Testing (Ver `.agents/skills/qa-auditor/TASK_LIST.md`)
+
+> El **Agent Sector QA / Testing** gestiona su checklist exclusivo y su hoja de ruta de testing en [.agents/skills/qa-auditor/TASK_LIST.md](file:///c:/Users/ink.enzo/Desktop/p/mi-web-personalizable/.agents/skills/qa-auditor/TASK_LIST.md).
+
+- [ ] **Nivel 1 (Unitario & Edge Cases)**: Tests para `/admin/profile` y `/admin/users` (Ver `TASK_LIST.md` de QA).
+- [ ] **Nivel 2 (Mocks & Firestore Rules)**: Configurar `@firebase/rules-unit-testing` (Ver `TASK_LIST.md` de QA).
+- [ ] **Nivel 3 (E2E & Regresión Visual)**: Integrar `@playwright/test` (Ver `TASK_LIST.md` de QA).

@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import OnboardingWizard from "../components/admin/OnboardingWizard.astro";
-import PublicLayout from "../components/public/PublicLayout.astro";
 import DevTools from "../components/devtools/DevTools.astro";
 ---
 
@@ -14,17 +13,7 @@ import DevTools from "../components/devtools/DevTools.astro";
     <OnboardingWizard domain="" />
   </div>
 
-  <div id="home-page" class="hidden">
-    <PublicLayout
-      site={{
-        id: "",
-        domain: "",
-        siteName: "",
-        siteDescription: "",
-        status: "pending",
-      }}
-    />
-  </div>
+  <div id="home-page" class="hidden"></div>
 
   <DevTools />
 </Layout>
@@ -33,22 +22,304 @@ import DevTools from "../components/devtools/DevTools.astro";
   import { getEffectiveDomain } from "../lib/domain-check";
   import { getSiteData, getSiteByOwnerId } from "../lib/site";
   import type { SiteData } from "../lib/site";
-  import { onAuthStateChanged } from "firebase/auth";
-  import { auth } from "../lib/firebase";
+  import { onAuthChange } from "../lib/firebase/auth";
 
   const loading = document.getElementById("loading");
   const onboarding = document.getElementById("onboarding");
   const homePage = document.getElementById("home-page");
 
+  // ============================================
+  // Funciones de renderizado HTML
+  // ============================================
+
+  function renderNavbar(site: SiteData): string {
+    const displayName = site.siteName || "Mi Web Personalizable";
+    if (!site.navLinks || site.navLinks.length === 0) return "";
+    return `
+      <header class="navbar">
+        <div class="container navbar-inner">
+          <a href="/" class="navbar-brand">${displayName}</a>
+          <nav class="navbar-links">
+            ${site.navLinks.map((link) => `<a href="${link.href}" class="navbar-link">${link.label}</a>`).join("")}
+          </nav>
+        </div>
+      </header>
+    `;
+  }
+
+  function renderHero(site: SiteData): string {
+    if (!site.heroTitle) return "";
+    const bgStyle = site.heroImage ? `style="background-image: url(${site.heroImage})"` : "";
+    return `
+      <section class="hero" ${bgStyle}>
+        <div class="container hero-content">
+          <h1 class="hero-title">${site.heroTitle}</h1>
+          ${site.heroSubtitle ? `<p class="hero-subtitle">${site.heroSubtitle}</p>` : ""}
+          ${site.heroCtaText && site.heroCtaLink ? `<a href="${site.heroCtaLink}" class="hero-cta">${site.heroCtaText}</a>` : ""}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderSections(site: SiteData): string {
+    if (!site.sections || site.sections.length === 0) return "";
+    const sorted = [...site.sections].sort((a, b) => a.order - b.order);
+    return sorted.map((section) => {
+      let content = "";
+      if (section.type === "text") {
+        content = `
+          <div class="section-text">
+            <h2>${section.title}</h2>
+            <div>${section.content}</div>
+          </div>
+        `;
+      } else if (section.type === "image-text") {
+        content = `
+          <div class="section-image-text">
+            <div class="section-image-text-content">
+              <h2>${section.title}</h2>
+              <div>${section.content}</div>
+            </div>
+            ${section.image ? `<div class="section-image-text-media"><img src="${section.image}" alt="${section.title}" loading="lazy" /></div>` : ""}
+          </div>
+        `;
+      } else if (section.type === "gallery") {
+        const images = (section.content || "").split(",").map((u) => u.trim());
+        content = `
+          <div class="section-gallery">
+            <h2>${section.title}</h2>
+            <div class="gallery-grid">
+              ${images.map((img) => `<div class="gallery-item"><img src="${img}" alt="" loading="lazy" /></div>`).join("")}
+            </div>
+          </div>
+        `;
+      } else if (section.type === "cards") {
+        const cards = (section.content || "").split("||").map((c) => {
+          const [t, d] = c.split("|").map((s) => s.trim());
+          return { title: t, desc: d };
+        });
+        content = `
+          <div class="section-cards">
+            <h2>${section.title}</h2>
+            <div class="cards-grid">
+              ${cards.map((card) => `<div class="card"><h3>${card.title}</h3>${card.desc ? `<p>${card.desc}</p>` : ""}</div>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+      return `<section class="section" id="section-${section.id}"><div class="container">${content}</div></section>`;
+    }).join("");
+  }
+
+  function renderSocial(site: SiteData): string {
+    if (!site.socialLinks) return "";
+    const { twitter, github, linkedin, instagram } = site.socialLinks;
+    if (!twitter && !github && !linkedin && !instagram) return "";
+    return `
+      <section class="social-section">
+        <div class="container">
+          <div class="social-links">
+            ${twitter ? `<a href="${twitter}" target="_blank" rel="noopener noreferrer" class="social-link">Twitter</a>` : ""}
+            ${github ? `<a href="${github}" target="_blank" rel="noopener noreferrer" class="social-link">GitHub</a>` : ""}
+            ${linkedin ? `<a href="${linkedin}" target="_blank" rel="noopener noreferrer" class="social-link">LinkedIn</a>` : ""}
+            ${instagram ? `<a href="${instagram}" target="_blank" rel="noopener noreferrer" class="social-link">Instagram</a>` : ""}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderFooter(site: SiteData): string {
+    const displayName = site.siteName || "Mi Web Personalizable";
+    const year = new Date().getFullYear();
+    return `
+      <footer class="site-footer">
+        <div class="container footer-inner">
+          <p class="footer-copy">&copy; ${year} ${displayName}. Todos los derechos reservados.</p>
+          ${site.navLinks && site.navLinks.length > 0 ? `
+            <nav class="footer-links">
+              ${site.navLinks.map((link) => `<a href="${link.href}" class="footer-link">${link.label}</a>`).join("")}
+            </nav>
+          ` : ""}
+        </div>
+      </footer>
+    `;
+  }
+
+  import { generateThemeCssBlock } from "../lib/theme";
+
+  function renderFullPage(site: SiteData): string {
+    const themeCss = generateThemeCssBlock(site.theme);
+
+    return `
+      <style>
+        ${themeCss}
+        .navbar {
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+        .navbar-inner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          height: 4rem;
+        }
+        .navbar-brand {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1a1a2e;
+        }
+        .navbar-brand:hover { text-decoration: none; color: var(--primary); }
+        .navbar-links { display: flex; gap: 1.5rem; }
+        .navbar-link {
+          font-size: 0.9375rem;
+          color: #4b5563;
+          transition: color 0.2s;
+        }
+        .navbar-link:hover { color: var(--primary); text-decoration: none; }
+        .hero {
+          padding: 6rem 0;
+          background-color: #f8fafc;
+          background-size: cover;
+          background-position: center;
+          background-blend-mode: overlay;
+          text-align: center;
+        }
+        .hero-content { max-width: 720px; margin: 0 auto; }
+        .hero-title {
+          font-size: 3rem;
+          font-weight: 800;
+          line-height: 1.2;
+          margin-bottom: 1rem;
+          color: #1a1a2e;
+        }
+        .hero-subtitle {
+          font-size: 1.25rem;
+          color: #6b7280;
+          margin-bottom: 2rem;
+        }
+        .hero-cta {
+          display: inline-block;
+          padding: 0.75rem 2rem;
+          background: var(--primary);
+          color: #ffffff;
+          border-radius: 0.5rem;
+          font-weight: 600;
+          font-size: 1rem;
+          transition: opacity 0.2s;
+        }
+        .hero-cta:hover { opacity: 0.9; text-decoration: none; }
+        .section { padding: 4rem 0; }
+        .section:nth-child(even) { background: #f9fafb; }
+        .section h2 {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 1.5rem;
+          color: #1a1a2e;
+        }
+        .section-image-text {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 3rem;
+          align-items: center;
+        }
+        .section-image-text-content h2 { margin-bottom: 1rem; }
+        .section-image-text-media img {
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 1rem;
+        }
+        .gallery-item { overflow: hidden; border-radius: 0.5rem; }
+        .gallery-item img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          transition: transform 0.3s;
+        }
+        .gallery-item img:hover { transform: scale(1.05); }
+        .cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+        .card {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          padding: 1.5rem;
+          transition: box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .card p { color: #6b7280; font-size: 0.9375rem; }
+        .social-section { padding: 3rem 0; background: #f8fafc; }
+        .social-links {
+          display: flex;
+          justify-content: center;
+          gap: 2rem;
+        }
+        .social-link {
+          font-size: 0.9375rem;
+          font-weight: 500;
+          color: #4b5563;
+          transition: color 0.2s;
+        }
+        .social-link:hover { color: var(--primary); text-decoration: none; }
+        .site-footer {
+          background: #1a1a2e;
+          color: #e5e7eb;
+          padding: 2rem 0;
+          margin-top: auto;
+        }
+        .footer-inner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .footer-copy { font-size: 0.875rem; margin: 0; }
+        .footer-links { display: flex; gap: 1.5rem; }
+        .footer-link {
+          font-size: 0.875rem;
+          color: #9ca3af;
+          transition: color 0.2s;
+        }
+        .footer-link:hover { color: #ffffff; text-decoration: none; }
+        @media (max-width: 768px) {
+          .navbar-inner { flex-direction: column; height: auto; padding: 1rem 0; gap: 0.75rem; }
+          .hero { padding: 4rem 0; }
+          .hero-title { font-size: 2rem; }
+          .section-image-text { grid-template-columns: 1fr; gap: 1.5rem; }
+          .social-links { flex-wrap: wrap; gap: 1rem; }
+          .footer-inner { flex-direction: column; text-align: center; }
+        }
+      </style>
+      ${renderNavbar(site)}
+      <main>
+        ${renderHero(site)}
+        ${renderSections(site)}
+        ${renderSocial(site)}
+      </main>
+      ${renderFooter(site)}
+    `;
+  }
+
   /**
-   * Muestra el PublicLayout con los datos completos del sitio
+   * Muestra el sitio público con los datos completos
    */
   function showHomePage(site: SiteData) {
-    const el = homePage?.querySelector("public-layout");
-    if (el) {
-      (el as any).site = site;
+    if (homePage) {
+      homePage.innerHTML = renderFullPage(site);
+      homePage.classList.remove("hidden");
     }
-    homePage?.classList.remove("hidden");
   }
 
   /**
@@ -81,7 +352,7 @@ import DevTools from "../components/devtools/DevTools.astro";
       // 2b. Si aún no, intentar buscar por ownerId del usuario autenticado
       if (!site) {
         site = await new Promise((resolve) => {
-          const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          const unsubscribe = onAuthChange(async (user) => {
             unsubscribe();
             if (user) {
               const siteByOwner = await getSiteByOwnerId(user.uid);
@@ -109,5 +380,13 @@ import DevTools from "../components/devtools/DevTools.astro";
 <style>
   .hidden {
     display: none;
+  }
+  #home-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  #home-page main {
+    flex: 1 0 auto;
   }
 </style>

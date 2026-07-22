@@ -20,7 +20,7 @@ const DEFAULT_DATA: AutofillData = {
   password: "Demo123!",
   siteName: "Mi Sitio Demo",
   siteDescription: "Un sitio de prueba para desarrollo",
-  domain: "midominio.com",
+  domain: "localhost.com",
   locale: "es",
 };
 

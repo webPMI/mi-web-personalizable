@@ -152,6 +152,50 @@ Muestra estadísticas detalladas del sistema i18n:
 - Porcentaje de cobertura.
 - Namespaces registrados.
 
+### `npm run qa`
+Ejecuta la auditoría QA sintética optimizada para ahorro de tokens:
+- Valida i18n (`npm run i18n:check`).
+- Ejecuta pruebas unitarias y de casos de borde (`vitest run`).
+- Devuelve un resumen sintético en formato limpio.
+
+---
+
+## 🧪 Reglas y Protocolo para el Agent Sector QA / Testing
+
+Cualquier agente al que se le asigne la tarea de testing o al recibir la instrucción *"cumple el rol de agente de testing"*, debe actuar bajo los siguientes principios:
+
+### 1. Filosofía de "Búsqueda de Fallos Reales"
+- El agente QA **nunca** crea pruebas superficiales solo para marcar verde un test.
+- Su meta es descubrir **fallos de frontera, desbordamientos, valores nulos/indefinidos, fallos de casing/espacios y vulnerabilidades de inyección**.
+
+### 2. Eficiencia de Tokens (*Token Efficiency*)
+- Utilizar `npm run qa` en lugar de lanzar múltiples comandos verbosos que saturen el contexto de la conversación.
+- Inspeccionar solo las líneas con fallos reportadas sintéticamente.
+
+### 3. Matriz de Escalabilidad de Testing
+A medida que el proyecto crezca, la suite seguirá la siguiente ruta optimizada:
+- **Nivel 1 (Actual)**: Pruebas unitarias de funciones puras, dominios e i18n (`Vitest`).
+- **Nivel 2**: Mocks y emulación de Firestore Rules / Firebase Auth.
+- **Nivel 3**: Pruebas E2E y de regresión visual (`Playwright`).
+
+---
+
+## ⚡ Golden Rules de Rendimiento, Caché y Paginación
+
+> **Regla de oro:** Minimizar las lecturas directas a la base de datos de Firestore. Todo acceso recurrente debe ser respaldado por la capa de caché y las listas largas deben usar paginación progresiva.
+
+### 1. Caché Obligatoria en Memoria / SWR (Stale-While-Revalidate)
+- Las lecturas de sitio (`getSiteData`) y páginas (`getPageBySlug`, `listSitePages`) **deben** consultar primero la caché local antes de realizar una petición remota a Firestore.
+- Definir un TTL (Time-To-Live) apropiado para las respuestas en memoria (por defecto 5 minutos).
+
+### 2. Invalidación Inmediata en Escritura
+- Cualquier operación que cree, modifique o elimine datos (`savePageSubcollection`, `deletePageSubcollection`, `updateDocument`) **debe invalidar inmediatamente** las claves de la caché asociadas a ese dominio o recurso.
+- Nunca mantener datos desactualizados en caché tras una edición confirmada.
+
+### 3. Paginación y Cargas Progresivas
+- Al consultar listas de subcolecciones o documentos, utilizar siempre parámetros de paginación (`limitCount`, `startAfterDoc`).
+- Evitar descargar colecciones enteras sin límite cuando el cliente solo requiere una vista parcial.
+
 ---
 
 ## Development

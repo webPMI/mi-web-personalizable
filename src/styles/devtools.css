@@ -3,6 +3,11 @@
    Separado de DevTools.astro para mantenerlo limpio
    ============================================ */
 
+/* --- Utilidades --- */
+.hidden {
+  display: none !important;
+}
+
 /* --- Toggle flotante --- */
 .devtools-toggle {
   position: fixed;

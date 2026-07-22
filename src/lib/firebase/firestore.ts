@@ -23,20 +23,47 @@ import {
 import { db } from "../firebase";
 import type { FirestoreResponse } from "../../types/firebase";
 
+/**
+ * Elimina recursivamente propiedades con valor undefined de un objeto antes de enviarlo a Firestore.
+ * Mantiene valores null, false, 0, strings vacíos y arrays.
+ */
+export function sanitizeData<T extends DocumentData>(data: T): T {
+  if (data === null || typeof data !== "object") return data;
+
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeData(item)) as unknown as T;
+  }
+
+  const cleanObj: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+
+    if (value !== null && typeof value === "object" && !(value instanceof Timestamp) && !(value instanceof Date)) {
+      cleanObj[key] = sanitizeData(value);
+    } else {
+      cleanObj[key] = value;
+    }
+  }
+
+  return cleanObj as T;
+}
+
 // --- Crear documento con ID autogenerado ---
 export async function createDocument<T extends DocumentData>(
   collectionName: string,
   data: T
 ): Promise<FirestoreResponse<{ id: string }>> {
   try {
+    const cleanData = sanitizeData(data);
     const docRef = await addDoc(collection(db, collectionName), {
-      ...data,
+      ...cleanData,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
     return { success: true, data: { id: docRef.id } };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
@@ -47,14 +74,15 @@ export async function setDocument<T extends DocumentData>(
   data: T
 ): Promise<FirestoreResponse<{ id: string }>> {
   try {
+    const cleanData = sanitizeData(data);
     await setDoc(doc(db, collectionName, docId), {
-      ...data,
+      ...cleanData,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
     return { success: true, data: { id: docId } };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
@@ -73,7 +101,7 @@ export async function getDocument<T>(
       data: { id: docSnap.id, ...docSnap.data() } as T & { id: string },
     };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
@@ -84,13 +112,14 @@ export async function updateDocument<T extends DocumentData>(
   data: Partial<T>
 ): Promise<FirestoreResponse<void>> {
   try {
+    const cleanData = sanitizeData(data as T);
     await updateDoc(doc(db, collectionName, docId), {
-      ...data,
+      ...cleanData,
       updatedAt: Timestamp.now(),
     });
     return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
@@ -103,7 +132,7 @@ export async function deleteDocument(
     await deleteDoc(doc(db, collectionName, docId));
     return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
@@ -147,12 +176,14 @@ export async function listDocuments<T>(
 
     return { success: true, data: documents };
   } catch (error) {
-    return { success: false, error: getFirestoreErrorMessage(error as FirestoreError) };
+    return { success: false, error: getFirestoreErrorMessage(error) };
   }
 }
 
 // --- Mapeo de errores de Firestore ---
-function getFirestoreErrorMessage(error: FirestoreError): string {
+export function getFirestoreErrorMessage(error: any): string {
+  if (!error) return "Ha ocurrido un error inesperado en Firestore.";
+  const code = typeof error === "object" && error.code ? error.code : String(error);
   const errorMap: Record<string, string> = {
     "permission-denied": "No tienes permisos para realizar esta operación.",
     "not-found": "El documento solicitado no existe.",
@@ -161,5 +192,5 @@ function getFirestoreErrorMessage(error: FirestoreError): string {
     "unavailable": "El servicio no está disponible. Intenta de nuevo.",
     "deadline-exceeded": "La operación tardó demasiado. Intenta de nuevo.",
   };
-  return errorMap[error.code] || `Error de Firestore: ${error.message}`;
+  return errorMap[code] || (error.message ? `Error de Firestore: ${error.message}` : "Ha ocurrido un error inesperado en Firestore.");
 }

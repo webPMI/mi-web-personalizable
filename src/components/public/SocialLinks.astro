@@ -81,8 +81,8 @@ const hasSocialLinks =
 
 <style>
     .social-section {
-        padding: 3rem 0;
-        background: #f8fafc;
+        padding: var(--section-gap, 3rem) 0;
+        background: var(--social-bg, #f8fafc);
     }
     .social-links {
         display: flex;
@@ -92,7 +92,7 @@ const hasSocialLinks =
     .social-link {
         font-size: 0.9375rem;
         font-weight: 500;
-        color: #4b5563;
+        color: var(--text-muted, #4b5563);
         transition: color 0.2s;
     }
     .social-link:hover {

@@ -15,11 +15,13 @@ import { registerTranslations } from "./i18n/index";
 import commonModule from "./i18n/modules/common";
 import onboardingModule from "./i18n/modules/onboarding";
 import adminModule from "./i18n/modules/admin";
+import publicModule from "./i18n/modules/public";
 
 // Registrar módulos al cargar
 registerTranslations("common", commonModule);
 registerTranslations("onboarding", onboardingModule);
 registerTranslations("admin", adminModule);
+registerTranslations("public", publicModule);
 
 // Re-exportar todo desde el core
 export {

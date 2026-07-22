@@ -4,6 +4,9 @@
 // ============================================
 //
 // Renderiza el hero solo si heroTitle existe.
+// Usa variables CSS del tema: --hero-height, --hero-align,
+//   --hero-overlay-color, --hero-overlay-opacity,
+//   --accent, --btn-radius, --btn-px, --btn-py
 // Props: heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink
 // ============================================
 
@@ -25,6 +28,7 @@ const { heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink } =
             class="hero"
             style={heroImage ? `background-image: url(${heroImage})` : ""}
         >
+            <div class="hero-overlay"></div>
             <div class="container hero-content">
                 <h1 class="hero-title">{heroTitle}</h1>
                 {heroSubtitle && <p class="hero-subtitle">{heroSubtitle}</p>}
@@ -40,38 +44,65 @@ const { heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink } =
 
 <style>
     .hero {
-        padding: 6rem 0;
-        background-color: #f8fafc;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--hero-height, 450px);
+        padding: 0;
+        background-color: var(--primary, #6366f1);
         background-size: cover;
         background-position: center;
         background-blend-mode: overlay;
-        text-align: center;
+        text-align: var(--hero-align, center);
+        overflow: hidden;
     }
+
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--hero-overlay-color, #000000);
+        opacity: var(--hero-overlay-opacity, 0.4);
+        z-index: 1;
+    }
+
     .hero-content {
+        position: relative;
+        z-index: 2;
         max-width: 720px;
         margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: var(--hero-align, center);
+        gap: 1rem;
     }
+
     .hero-title {
-        font-size: 3rem;
-        font-weight: 800;
+        font-size: var(--hero-title-size, 3rem);
+        font-weight: var(--hero-title-weight, 800);
         line-height: 1.2;
-        margin-bottom: 1rem;
-        color: #1a1a2e;
+        margin: 0;
+        color: var(--hero-text-color, #ffffff);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
+
     .hero-subtitle {
-        font-size: 1.25rem;
-        color: #6b7280;
-        margin-bottom: 2rem;
+        font-size: var(--hero-subtitle-size, 1.25rem);
+        color: var(--hero-subtitle-color, rgba(255,255,255,0.9));
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+
     .hero-cta {
         display: inline-block;
-        padding: 0.75rem 2rem;
-        background: var(--primary);
+        padding: var(--btn-py, 12px) var(--btn-px, 24px);
+        background: var(--accent, #4f46e5);
         color: #ffffff;
-        border-radius: 0.5rem;
+        border-radius: var(--btn-radius, 6px);
         font-weight: 600;
         font-size: 1rem;
         transition: opacity 0.2s;
+        text-decoration: none;
     }
     .hero-cta:hover {
         opacity: 0.9;
@@ -79,11 +110,11 @@ const { heroTitle, heroSubtitle, heroImage, heroCtaText, heroCtaLink } =
     }
 
     @media (max-width: 768px) {
-        .hero {
-            padding: 4rem 0;
-        }
         .hero-title {
             font-size: 2rem;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
         }
     }
 </style>

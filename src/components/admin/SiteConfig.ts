@@ -17,6 +17,8 @@
 // ============================================
 
 import { getDocument, updateDocument, setDocument } from "../../lib/firebase/firestore";
+import { escapeAttribute, sanitizeSiteData } from "../../lib/sanitizer";
+import { MemoryCache } from "../../lib/cache";
 
 /**
  * Inicializa el formulario de configuración.
@@ -178,7 +180,7 @@ function renderNavLinks(links: Array<{ label: string; href: string }>): void {
 }
 
 /**
- * Añade una fila de enlace al navbar.
+ * Añade una fila de enlace al navbar con botones de reordenamiento (↑/↓) y eliminación.
  */
 function addNavLinkRow(label: string, href: string): void {
   const container = document.getElementById("nav-links-container");
@@ -188,11 +190,32 @@ function addNavLinkRow(label: string, href: string): void {
   row.className = "nav-link-row";
 
   row.innerHTML = `
-    <input type="text" class="nav-link-label" placeholder="Texto (ej: Inicio)" value="${escapeHtml(label)}" />
-    <input type="text" class="nav-link-href" placeholder="URL (ej: /)" value="${escapeHtml(href)}" />
+    <button type="button" class="btn btn-sm btn-secondary nav-link-move-up" title="Mover arriba">↑</button>
+    <button type="button" class="btn btn-sm btn-secondary nav-link-move-down" title="Mover abajo">↓</button>
+    <input type="text" class="nav-link-label" placeholder="Texto (ej: Inicio)" value="${escapeAttribute(label)}" />
+    <input type="text" class="nav-link-href" placeholder="URL (ej: /)" value="${escapeAttribute(href)}" />
     <button type="button" class="btn btn-danger btn-sm nav-link-remove" title="Eliminar enlace">&times;</button>
   `;
 
+  // Mover arriba
+  const moveUpBtn = row.querySelector(".nav-link-move-up") as HTMLButtonElement;
+  moveUpBtn.addEventListener("click", () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      container.insertBefore(row, prev);
+    }
+  });
+
+  // Mover abajo
+  const moveDownBtn = row.querySelector(".nav-link-move-down") as HTMLButtonElement;
+  moveDownBtn.addEventListener("click", () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      container.insertBefore(next, row);
+    }
+  });
+
+  // Eliminar
   const removeBtn = row.querySelector(".nav-link-remove") as HTMLButtonElement;
   removeBtn.addEventListener("click", () => {
     row.remove();
@@ -310,6 +333,10 @@ function setupSaveHandler(siteDomain: string): void {
         });
       }
 
+      // Invalidar caché en memoria del sitio y de páginas inmediatamente
+      MemoryCache.invalidate(`site:${siteDomain}`);
+      MemoryCache.invalidate(`pages-list:${siteDomain}`);
+
       showFeedback("success", "Cambios guardados correctamente.");
     } catch {
       showFeedback("error", "Error al guardar la configuración.");
@@ -329,7 +356,7 @@ function collectFormData(): Record<string, any> {
   const getVal = (id: string): string =>
     (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement)?.value?.trim() || "";
 
-  return {
+  return sanitizeSiteData({
     // General
     siteName: getVal("site-name"),
     siteDescription: getVal("site-description"),
@@ -366,7 +393,7 @@ function collectFormData(): Record<string, any> {
       fontFamily: getVal("theme-font"),
       layout: (document.getElementById("theme-layout") as HTMLSelectElement)?.value || "centered",
     },
-  };
+  });
 }
 
 // ============================================

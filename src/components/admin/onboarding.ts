@@ -1,7 +1,7 @@
-import { registerUser } from "../../lib/firebase/auth";
-import { setDocument, createDocument } from "../../lib/firebase/firestore";
+import { registerUser, loginUser, onAuthChange } from "../../lib/firebase/auth";
 import { t, getStoredLocale, setStoredLocale, type SupportedLocale } from "../../lib/i18n";
 import { getEffectiveDomain, checkDomain } from "../../lib/domain-check";
+import { showFieldError, clearAllErrors, clearErrorOnInput } from "../../lib/ui-helpers";
 
 // Prefijos de namespace para traducciones
 const O = "onboarding";
@@ -54,7 +54,7 @@ function clearProgress(): void {
   }
 }
 
-export function initOnboarding() {
+export async function initOnboarding() {
   const container = document.querySelector(".onboarding-container");
   const domain = container?.getAttribute("data-domain") || getEffectiveDomain();
 
@@ -98,10 +98,24 @@ export function initOnboarding() {
   // --- Aplicar idioma guardado ---
   applyStoredLocale();
 
-  // --- Restaurar paso guardado ---
-  const savedStep = getStoredStep();
-  if (savedStep > 1) {
-    goToStep(savedStep);
+  // --- Detectar si el usuario ya está autenticado ---
+  const { auth } = await import("../../lib/firebase");
+  const currentUser = auth.currentUser;
+
+  if (currentUser) {
+    // Usuario ya autenticado → saltar paso 2, ir directo al paso 3
+    // Ocultar el paso 2 del flujo visualmente
+    const step2Indicator = document.querySelector('[data-step="2"]');
+    if (step2Indicator) {
+      step2Indicator.classList.add("completed");
+    }
+    goToStep(3);
+  } else {
+    // --- Restaurar paso guardado (solo si no está autenticado) ---
+    const savedStep = getStoredStep();
+    if (savedStep > 1) {
+      goToStep(savedStep);
+    }
   }
 
   // --- Selección de idioma ---
@@ -235,14 +249,21 @@ export function initOnboarding() {
       return;
     }
 
-    // Mostrar estado de verificación
-    domainStatus.textContent = "⏳ Verificando...";
+    // Mostrar estado de verificación con i18n y spinner
+    domainStatus.textContent = t(`${O}:domain-checking`);
     domainStatus.className = "domain-status checking";
-    if (btnCheckDomain) btnCheckDomain.disabled = true;
+    const originalBtnText = btnCheckDomain?.textContent || t(`${O}:btn-check-domain`);
+    if (btnCheckDomain) {
+      btnCheckDomain.disabled = true;
+      btnCheckDomain.innerHTML = `<span class="spinner-sm"></span> ${t(`${O}:domain-checking`)}`;
+    }
 
     const site = await checkDomain(domainValue);
 
-    if (btnCheckDomain) btnCheckDomain.disabled = false;
+    if (btnCheckDomain) {
+      btnCheckDomain.disabled = false;
+      btnCheckDomain.textContent = originalBtnText;
+    }
 
     if (site) {
       // Dominio ocupado
@@ -377,13 +398,6 @@ export function initOnboarding() {
   }
 
   // --- Limpiar errores al escribir ---
-  function clearErrorOnInput(inputId: string, groupId: string) {
-    const input = document.getElementById(inputId);
-    const group = document.getElementById(groupId);
-    input?.addEventListener("input", () => {
-      group?.classList.remove("error");
-    });
-  }
   clearErrorOnInput("username", "fg-username");
   clearErrorOnInput("name", "fg-name");
   clearErrorOnInput("email", "fg-email");
@@ -392,18 +406,6 @@ export function initOnboarding() {
   clearErrorOnInput("site-name", "fg-site-name");
   clearErrorOnInput("site-description", "fg-site-description");
   clearErrorOnInput("domain-input", "fg-domain");
-
-  // --- Mostrar error en un campo ---
-  function showFieldError(groupId: string, message: string) {
-    const group = document.getElementById(groupId);
-    const errEl = group?.querySelector(".field-error");
-    group?.classList.add("error");
-    if (errEl) errEl.textContent = message;
-  }
-
-  function clearAllErrors() {
-    document.querySelectorAll(".form-group.error").forEach((el) => el.classList.remove("error"));
-  }
 
   // --- Submit ---
   btnSubmit?.addEventListener("click", async () => {
@@ -485,18 +487,36 @@ export function initOnboarding() {
     loadingState?.classList.remove("hidden");
     btnSubmit.disabled = true;
 
-    const authResult = await registerUser(email, password, name);
+    // ============================================
+    // Detectar si el usuario ya está autenticado
+    // ============================================
+    const { auth } = await import("../../lib/firebase");
+    const currentUser = auth.currentUser;
 
-    if (!authResult.success) {
-      loadingState?.classList.add("hidden");
-      document.getElementById("step-3")?.classList.remove("hidden");
-      btnSubmit.disabled = false;
-      showFieldError("fg-email", (authResult as any).error || t(`${O}:err-auth-error`));
-      emailInput?.focus();
-      return;
+    let ownerId: string | undefined;
+    let ownerName: string;
+
+    if (currentUser) {
+      // Usuario ya autenticado → usar su UID
+      ownerId = currentUser.uid;
+      ownerName = currentUser.displayName || name;
+    } else {
+      // Usuario no autenticado → registrar nueva cuenta
+      const authResult = await registerUser(email, password, name);
+
+      if (!authResult.success) {
+        loadingState?.classList.add("hidden");
+        document.getElementById("step-3")?.classList.remove("hidden");
+        btnSubmit.disabled = false;
+        showFieldError("fg-email", (authResult as any).error || t(`${O}:err-auth-error`));
+        emailInput?.focus();
+        return;
+      }
+
+      ownerId = authResult.user?.uid;
+      ownerName = name;
     }
 
-    const ownerId = authResult.user?.uid;
     if (!ownerId) {
       loadingState?.classList.add("hidden");
       document.getElementById("step-3")?.classList.remove("hidden");
@@ -505,23 +525,17 @@ export function initOnboarding() {
       return;
     }
 
-    // Usar el dominio seleccionado como ID del documento para evitar duplicados
-    // y asignar rol admin al creador
-    const siteResult = await setDocument("sites", selectedDomain, {
-      domain: selectedDomain,
+    // Usar createSite compartido desde site.ts
+    const { createSite } = await import("../../lib/site");
+    const created = await createSite(selectedDomain, {
       ownerId,
       ownerUsername: username,
       siteName,
       siteDescription: siteDescription || "",
-      status: "active",
       locale: selectedLocale,
-      registeredAt: new Date().toISOString(),
-      roles: {
-        [ownerId]: "admin",
-      },
     });
 
-    if (!siteResult.success) {
+    if (!created) {
       loadingState?.classList.add("hidden");
       document.getElementById("step-3")?.classList.remove("hidden");
       btnSubmit.disabled = false;

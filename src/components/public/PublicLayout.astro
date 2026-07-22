@@ -5,7 +5,7 @@
 //
 // Orquestador que importa y monta los
 // subcomponentes del sitio público.
-// No contiene estilos propios.
+// Define todas las variables CSS del tema.
 //
 // Uso:
 //   <PublicLayout site={siteData} />
@@ -17,6 +17,7 @@ import HeroSection from "./HeroSection.astro";
 import DynamicSections from "./DynamicSections.astro";
 import SocialLinks from "./SocialLinks.astro";
 import Footer from "./Footer.astro";
+import { generateThemeCssBlock } from "../../lib/theme";
 
 export interface Props {
     site: SiteData;
@@ -25,12 +26,7 @@ export interface Props {
 const { site } = Astro.props;
 
 const displayName = site.siteName || "Mi Web Personalizable";
-
-// --- Tema CSS ---
-const primaryColor = site.theme?.primaryColor || "#2563eb";
-const fontFamily = site.theme?.fontFamily || "'Inter', system-ui, sans-serif";
-const layout = site.theme?.layout || "centered";
-const maxWidth = layout === "full-width" ? "100%" : "1200px";
+const themeCss = generateThemeCssBlock(site.theme);
 ---
 
 <!DOCTYPE html>
@@ -48,31 +44,102 @@ const maxWidth = layout === "full-width" ? "100%" : "1200px";
             <meta name="twitter:card" content="summary_large_image" />
         </>
     )}
+    <style set:html={themeCss}></style>
     <style>
-        :root {
-            --primary: {primaryColor};
-            --font-family: {fontFamily};
-            --max-width: {maxWidth};
-        }
+        /* ============================================
+           Reset y estilos base
+           ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: var(--font-family);
-            color: #1a1a2e;
-            background: #ffffff;
-            line-height: 1.6;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight);
+            color: var(--text);
+            background: var(--bg);
+            line-height: var(--line-height, 1.6);
         }
-        a { color: var(--primary); text-decoration: none; }
-        a:hover { text-decoration: underline; }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-headings);
+            line-height: var(--heading-line-height, 1.3);
+        }
+
+        h1 { font-size: var(--h1-size, 2.5rem); }
+        h2 { font-size: var(--h2-size, 2rem); }
+        h3 { font-size: var(--h3-size, 1.25rem); }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover { text-decoration: var(--link-hover-decoration, underline); }
+
         img { max-width: 100%; height: auto; }
+
         .container {
             max-width: var(--max-width);
             margin: 0 auto;
-            padding: 0 1.5rem;
+            padding: 0 var(--container-padding);
+        }
+
+        section {
+            padding: var(--section-gap) 0;
+        }
+
+        /* ============================================
+           Botón genérico del sitio
+           ============================================ */
+        .btn-site {
+            display: inline-block;
+            padding: var(--btn-py) var(--btn-px);
+            border-radius: var(--btn-radius);
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+
+        .btn-site--filled {
+            background: var(--accent);
+            color: var(--btn-text-color, #ffffff);
+            border: none;
+        }
+        .btn-site--filled:hover {
+            opacity: 0.9;
+            text-decoration: none;
+        }
+
+        .btn-site--outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+        .btn-site--outline:hover {
+            background: var(--accent);
+            color: var(--btn-text-color, #ffffff);
+            text-decoration: none;
+        }
+
+        .btn-site--ghost {
+            background: transparent;
+            color: var(--accent);
+            border: none;
+        }
+        .btn-site--ghost:hover {
+            background: var(--btn-hover-bg, rgba(79, 70, 229, 0.08));
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <Navbar siteName={site.siteName} navLinks={site.navLinks} />
+    <Navbar
+        siteName={site.siteName}
+        navLinks={site.navLinks}
+    />
 
     <main>
         <HeroSection
@@ -88,6 +155,9 @@ const maxWidth = layout === "full-width" ? "100%" : "1200px";
         <SocialLinks socialLinks={site.socialLinks} />
     </main>
 
-    <Footer siteName={site.siteName} navLinks={site.navLinks} />
+    <Footer
+        siteName={site.siteName}
+        navLinks={site.navLinks}
+    />
 </body>
 </html>

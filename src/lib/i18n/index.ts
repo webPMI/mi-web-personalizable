@@ -32,7 +32,7 @@ export function registerTranslations(namespace: string, module: TranslationModul
  */
 export function getStoredLocale(): SupportedLocale {
   if (typeof window === "undefined") return "es";
-  const stored = localStorage.getItem("app-locale");
+  const stored = window.localStorage.getItem("app-locale");
   if (stored === "es" || stored === "en") return stored;
   return "es";
 }
@@ -41,7 +41,9 @@ export function getStoredLocale(): SupportedLocale {
  * Guarda el locale seleccionado
  */
 export function setStoredLocale(locale: SupportedLocale): void {
-  localStorage.setItem("app-locale", locale);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem("app-locale", locale);
+  }
 }
 
 /**
@@ -100,7 +102,7 @@ export function t(key: string, params?: Record<string, string>): string {
   // Interpolar parámetros
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      text = text.replace(`{${k}}`, v);
+      text = text.replaceAll(`{${k}}`, String(v ?? ""));
     }
   }
 

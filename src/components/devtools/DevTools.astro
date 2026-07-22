@@ -36,6 +36,15 @@ const isDev = import.meta.env.DEV;
           </div>
         </div>
 
+        <!-- Login (oculto por defecto, se muestra con JS) -->
+        <div id="devtools-login-section" class="devtools-section hidden">
+          <label class="devtools-label">Login</label>
+          <div class="devtools-row" style="display: flex; flex-direction: column; gap: 4px;">
+            <button id="devtools-login-autofill" class="devtools-btn" style="width: 100%;">Autocompletar login (demo)</button>
+            <button id="devtools-login-admin" class="devtools-btn devtools-btn-accent" style="width: 100%;">Login como admin demo</button>
+          </div>
+        </div>
+
         <!-- Onboarding (oculto por defecto, se muestra con JS) -->
         <div id="devtools-onboarding-section" class="devtools-section hidden">
           <label class="devtools-label">Onboarding</label>

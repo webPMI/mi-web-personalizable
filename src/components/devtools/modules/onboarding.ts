@@ -17,7 +17,7 @@ export const onboardingModule: DevToolsModule = {
     `;
   },
 
-  init(container) {
+  init(container: HTMLElement) {
     const btn = container.querySelector("#devtools-onboarding-autofill");
 
     btn?.addEventListener("click", async () => {

@@ -16,6 +16,9 @@ export function initDevToolsUI(): void {
   const resetBtn = document.getElementById("devtools-action-reset");
   const reloadBtn = document.getElementById("devtools-action-reload");
   const firebaseStatus = document.getElementById("devtools-firebase-status");
+  const loginSection = document.getElementById("devtools-login-section");
+  const loginAutofillBtn = document.getElementById("devtools-login-autofill");
+  const loginAdminBtn = document.getElementById("devtools-login-admin");
   const onboardingSection = document.getElementById("devtools-onboarding-section");
   const autofillBtn = document.getElementById("devtools-onboarding-autofill");
 
@@ -71,6 +74,83 @@ export function initDevToolsUI(): void {
     window.location.reload();
   });
 
+  // --- Autocompletar login (demo) ---
+  loginAutofillBtn?.addEventListener("click", async () => {
+    const { autofillLogin } = await import("./login-autofill");
+    const ok = autofillLogin();
+    if (ok) {
+      loginAutofillBtn.textContent = "✅ Login completado";
+      setTimeout(() => {
+        loginAutofillBtn.textContent = "Autocompletar login (demo)";
+      }, 2000);
+    }
+  });
+
+  // --- Login como admin demo ---
+  loginAdminBtn?.addEventListener("click", async () => {
+    const { autofillLogin } = await import("./login-autofill");
+    const { loginUser, registerUser } = await import("../../lib/firebase/auth");
+    const { getDocument, updateDocument, setDocument } = await import("../../lib/firebase/firestore");
+    const { getEffectiveDomain } = await import("../../lib/domain-check");
+
+    const ADMIN_EMAIL = "admin@demo.com";
+    const ADMIN_PASS = "Admin123!";
+
+    // Autocompletar con datos de admin
+    autofillLogin({ email: ADMIN_EMAIL, password: ADMIN_PASS });
+
+    loginAdminBtn.textContent = "⏳ Creando usuario admin...";
+
+    // 1. Intentar login primero
+    let result = await loginUser(ADMIN_EMAIL, ADMIN_PASS);
+
+    // 2. Si no existe, registrarlo
+    if (!result.success) {
+      loginAdminBtn.textContent = "⏳ Registrando usuario admin...";
+      result = await registerUser(ADMIN_EMAIL, ADMIN_PASS, "Admin Demo");
+    }
+
+    if (result.success && result.user) {
+      loginAdminBtn.textContent = "⏳ Configurando sitio...";
+
+      // 3. Asignar rol admin en el sitio actual
+      const domain = getEffectiveDomain();
+      try {
+        const siteResult = await getDocument("sites", domain);
+        if (siteResult.success && siteResult.data) {
+          const site = siteResult.data as any;
+          const roles = site.roles || {};
+          roles[result.user.uid] = "admin";
+          await updateDocument("sites", domain, { roles });
+        }
+      } catch {
+        // Si falla, intentar crear el sitio primero
+        try {
+          await setDocument("sites", domain, {
+            domain,
+            siteName: "Mi Sitio Admin Demo",
+            siteDescription: "Sitio de prueba para admin",
+            ownerId: result.user.uid,
+            status: "active",
+            roles: { [result.user.uid]: "admin" },
+          });
+        } catch {
+          // Ignorar
+        }
+      }
+
+      loginAdminBtn.textContent = "✅ Redirigiendo...";
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 500);
+    } else {
+      loginAdminBtn.textContent = "❌ Error: " + ("error" in result ? result.error : "desconocido");
+      setTimeout(() => {
+        loginAdminBtn.textContent = "Login como admin demo";
+      }, 3000);
+    }
+  });
+
   // --- Autocompletar onboarding ---
   autofillBtn?.addEventListener("click", async () => {
     const { autofillOnboarding } = await import("./onboarding-autofill");
@@ -91,6 +171,7 @@ async function onPanelOpen(
   firebaseStatus: HTMLElement | null,
   onboardingSection: HTMLElement | null
 ): Promise<void> {
+  const loginSection = document.getElementById("devtools-login-section");
   // --- Firebase status ---
   if (firebaseStatus) {
     try {
@@ -107,6 +188,12 @@ async function onPanelOpen(
       firebaseStatus.textContent = "❌ Firebase no disponible";
       firebaseStatus.className = "devtools-status error";
     }
+  }
+
+  // --- Detectar login ---
+  if (loginSection) {
+    const isLogin = !!document.getElementById("login-form");
+    loginSection.classList.toggle("hidden", !isLogin);
   }
 
   // --- Detectar onboarding ---

@@ -11,6 +11,7 @@
 // ============================================
 
 import { getDocument } from "../../lib/firebase/firestore";
+import { escapeAttribute } from "../../lib/sanitizer";
 
 /**
  * Inicializa el Dashboard.
@@ -49,11 +50,14 @@ async function loadSiteInfo(siteDomain: string): Promise<void> {
       const registeredDate = site.registeredAt
         ? new Date(site.registeredAt).toLocaleDateString()
         : "—";
+      const cleanDomain = escapeAttribute(site.domain || siteDomain);
+      const cleanOwner = site.ownerUsername ? escapeAttribute(site.ownerUsername) : "";
+
       siteInfoContent.innerHTML = `
-        <p><strong>Dominio:</strong> ${site.domain || siteDomain}</p>
+        <p><strong>Dominio:</strong> ${cleanDomain}</p>
         <p><strong>Estado:</strong> <span class="badge">${statusText}</span></p>
         <p><strong>Fecha de registro:</strong> ${registeredDate}</p>
-        ${site.ownerUsername ? `<p><strong>Propietario:</strong> ${site.ownerUsername}</p>` : ""}
+        ${cleanOwner ? `<p><strong>Propietario:</strong> ${cleanOwner}</p>` : ""}
       `;
     } else {
       siteInfoContent.innerHTML = `<p class="text-muted">No se pudo cargar la información del sitio.</p>`;

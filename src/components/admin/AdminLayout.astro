@@ -4,10 +4,12 @@
 // ============================================
 // Este componente es el esqueleto base que envuelve a todas las
 // páginas del admin. Maneja:
-//   - Autenticación (onAuthChange)
+//   - Autenticación (onAuthChange + currentUser directo)
 //   - Detección del sitio del usuario (checkUserSite)
 //   - Estados: loading, unauthenticated, no-site, authenticated
-//   - Navegación tipo tabs (Dashboard, Configuración, ...)
+//   - Sidebar lateral colapsable con navegación
+//   - Navbar superior con accesos rápidos
+//   - Navegación SPA (sin recarga de página)
 //   - Logout
 //
 // Expone vía data attributes en el contenedor:
@@ -29,26 +31,34 @@ const domain = getEffectiveDomain();
   <title>Panel de Administración</title>
 </head>
 <body>
-  <div class="admin-container" id="admin-app" data-domain={domain}>
+  <div class="admin-layout" id="admin-app" data-domain={domain}>
 
+    <!-- ============================================ -->
     <!-- Estado de carga -->
-    <div id="loading-state" class="text-center mt-lg">
+    <!-- ============================================ -->
+    <div id="loading-state" class="admin-loading">
+      <div class="spinner"></div>
       <p id="loading-text">Verificando autenticación...</p>
     </div>
 
+    <!-- ============================================ -->
     <!-- Estado: No autenticado -->
-    <div id="unauthenticated-state" class="hidden text-center mt-lg">
+    <!-- ============================================ -->
+    <div id="unauthenticated-state" class="hidden admin-center">
       <div class="card" style="max-width: 400px; margin: 0 auto;">
         <h2 id="unauthenticated-title">Acceso restringido</h2>
         <p class="text-muted" id="unauthenticated-desc">
           Debes iniciar sesión para acceder al panel de administración.
         </p>
-        <a href="/" class="btn btn-primary btn-lg mt-md" id="btn-back-home">Volver al inicio</a>
+        <a href="/login" class="btn btn-primary btn-lg mt-md" id="btn-go-login">Iniciar sesión</a>
+        <a href="/" class="btn btn-secondary mt-sm" id="btn-back-home">Volver al inicio</a>
       </div>
     </div>
 
+    <!-- ============================================ -->
     <!-- Estado: Autenticado pero sin sitio registrado -->
-    <div id="no-site-state" class="hidden">
+    <!-- ============================================ -->
+    <div id="no-site-state" class="hidden admin-center">
       <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
         <h2 id="no-site-title">No hay sitio registrado</h2>
         <p class="text-muted" id="no-site-desc">
@@ -60,28 +70,122 @@ const domain = getEffectiveDomain();
       </div>
     </div>
 
+    <!-- ============================================ -->
     <!-- Estado: Autenticado y con sitio -->
-    <div id="authenticated-state" class="hidden">
-      <!-- Header -->
-      <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h1 style="margin: 0;" id="dashboard-title">Panel de Administración</h1>
-          <p class="text-muted" style="margin: var(--space-xs) 0 0 0;" id="dashboard-managing">
-            Gestionando: <strong>{domain}</strong>
-          </p>
+    <!-- ============================================ -->
+    <div id="authenticated-state" class="hidden admin-authenticated">
+
+      <!-- Overlay para menú hamburguesa en mobile -->
+      <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <button id="btn-toggle-sidebar" class="sidebar-toggle" title="Colapsar menú">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <span class="sidebar-logo-text">Admin</span>
         </div>
-        <button id="btn-logout" class="btn btn-danger btn-sm">Cerrar sesión</button>
-      </div>
 
-      <!-- Navegación tipo tabs -->
-      <nav class="admin-nav" id="admin-nav">
-        <a href="/admin" id="nav-dashboard" class="active">Dashboard</a>
-        <a href="/admin/config" id="nav-config">Configuración</a>
-      </nav>
+        <nav class="sidebar-nav" id="sidebar-nav">
+          <a href="/admin" class="sidebar-link active" data-nav="dashboard" data-tooltip="Dashboard">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+          </a>
+          <a href="/admin/config" class="sidebar-link" data-nav="config" data-tooltip="Configuración">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="sidebar-label">Configuración</span>
+          </a>
+          <a href="/admin/pages" class="sidebar-link" data-nav="pages" data-tooltip="Páginas">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span class="sidebar-label">Páginas</span>
+          </a>
+          <a href="/admin/theme" class="sidebar-link" data-nav="theme" data-tooltip="Tema">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <span class="sidebar-label">Tema</span>
+          </a>
+          <a href="/admin/profile" class="sidebar-link" data-nav="profile" data-tooltip="Perfil">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="sidebar-label">Perfil</span>
+          </a>
+          <a href="/admin/users" class="sidebar-link" data-nav="users" data-tooltip="Usuarios">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="sidebar-label">Usuarios</span>
+          </a>
+        </nav>
 
-      <!-- Contenido de la página hija -->
-      <div id="page-content">
-        <slot />
+        <div class="sidebar-footer">
+          <button id="btn-logout" class="sidebar-link sidebar-logout" data-tooltip="Cerrar sesión">
+            <svg class="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="sidebar-label">Cerrar sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Contenido principal -->
+      <div class="main-area">
+        <!-- Navbar superior -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="btn-hamburger" class="topbar-hamburger" title="Abrir menú">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <span class="topbar-domain" id="topbar-domain">{domain}</span>
+          </div>
+          <div class="topbar-right">
+            <span class="topbar-user" id="topbar-user"></span>
+          </div>
+        </header>
+
+
+        <!-- Contenido de la página -->
+        <main class="main-content" id="page-content">
+          <slot />
+        </main>
       </div>
     </div>
   </div>
@@ -91,9 +195,12 @@ const domain = getEffectiveDomain();
 <script>
   import { onAuthChange, logoutUser } from "../../lib/firebase/auth";
   import { getDocument } from "../../lib/firebase/firestore";
-  import { getEffectiveDomain } from "../../lib/domain-check";
-  import { getSiteByOwnerId } from "../../lib/site";
+  import { checkUserSite } from "../../lib/site";
+  import { auth } from "../../lib/firebase";
 
+  // ============================================
+  // Elementos del DOM
+  // ============================================
   const loadingState = document.getElementById("loading-state");
   const unauthenticatedState = document.getElementById("unauthenticated-state");
   const authenticatedState = document.getElementById("authenticated-state");
@@ -102,49 +209,177 @@ const domain = getEffectiveDomain();
   const btnLogoutNoSite = document.getElementById("btn-logout-no-site");
   const btnRefresh = document.getElementById("btn-refresh");
   const adminApp = document.getElementById("admin-app");
+  const sidebar = document.getElementById("sidebar");
+  const btnToggleSidebar = document.getElementById("btn-toggle-sidebar");
+  const sidebarLinks = document.querySelectorAll(".sidebar-link[data-nav]");
+  const pageContent = document.getElementById("page-content");
+  const topbarUser = document.getElementById("topbar-user");
 
-  const domain = getEffectiveDomain();
+  const domain = adminApp?.dataset?.domain || "";
 
-  // Variable global para que las páginas hijas puedan acceder al siteDomain
   let currentSiteDomain: string | null = null;
   let currentSiteData: any = null;
+  let isSidebarCollapsed = false;
+  let isMobileOpen = false;
 
-  /**
-   * Verifica si el usuario tiene un sitio registrado.
-   * Busca por ownerId (funciona desde cualquier navegador/sesión).
-   * Solo como optimización, intenta primero por dominio actual.
-   * Devuelve el dominio del sitio encontrado, o null si no tiene sitio.
-   */
-  async function checkUserSite(uid: string): Promise<string | null> {
-    // 1. Intentar por dominio actual (optimización: evita query si el sitio está en el dominio actual)
-    try {
-      const result = await getDocument("sites", domain);
-      if (result.success && result.data) {
-        const site = result.data as any;
-        if (site.ownerId === uid || (site.roles && site.roles[uid])) {
-          return domain;
-        }
-      }
-    } catch {
-      // Ignorar error, continuar con búsqueda por ownerId
+  // ============================================
+  // Sidebar colapsable (desktop)
+  // ============================================
+  // Recuperar preferencia guardada
+  try {
+    const saved = localStorage.getItem("admin:sidebar-collapsed");
+    if (saved === "true") {
+      isSidebarCollapsed = true;
+      sidebar?.classList.add("collapsed");
     }
+  } catch { /* ignore */ }
 
-    // 2. Buscar por ownerId (funciona desde cualquier navegador/sesión)
+  btnToggleSidebar?.addEventListener("click", () => {
+    isSidebarCollapsed = !isSidebarCollapsed;
+    sidebar?.classList.toggle("collapsed", isSidebarCollapsed);
+    // Persistir preferencia
     try {
-      const site = await getSiteByOwnerId(uid);
-      if (site) {
-        return site.domain;
-      }
-    } catch {
-      // Ignorar error
-    }
+      localStorage.setItem("admin:sidebar-collapsed", String(isSidebarCollapsed));
+    } catch { /* ignore */ }
+  });
 
-    return null;
+  // ============================================
+  // Menú hamburguesa (mobile)
+  // ============================================
+  const btnHamburger = document.getElementById("btn-hamburger");
+  const sidebarOverlay = document.getElementById("sidebar-overlay");
+
+  function openMobileMenu() {
+    isMobileOpen = true;
+    sidebar?.classList.add("hamburger-open");
+    sidebarOverlay?.classList.add("visible");
+    document.body.style.overflow = "hidden";
   }
 
-  /**
-   * Muestra el estado correspondiente según autenticación
-   */
+  function closeMobileMenu() {
+    isMobileOpen = false;
+    sidebar?.classList.remove("hamburger-open");
+    sidebarOverlay?.classList.remove("visible");
+    document.body.style.overflow = "";
+  }
+
+  btnHamburger?.addEventListener("click", () => {
+    if (isMobileOpen) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  });
+
+  sidebarOverlay?.addEventListener("click", closeMobileMenu);
+
+  // Cerrar menú mobile al hacer clic en un enlace
+  sidebarLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) {
+        closeMobileMenu();
+      }
+    });
+  });
+
+  // Cerrar menú mobile al redimensionar a desktop
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 768 && isMobileOpen) {
+      closeMobileMenu();
+    }
+  });
+
+
+  // ============================================
+  // Navegación SPA (sin recarga)
+  // ============================================
+  sidebarLinks.forEach((link) => {
+    link.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const href = (link as HTMLAnchorElement).getAttribute("href");
+      if (!href) return;
+
+      // Actualizar active state
+      sidebarLinks.forEach((l) => l.classList.remove("active"));
+      link.classList.add("active");
+
+      // Actualizar URL sin recargar
+      window.history.pushState({}, "", href);
+
+      // Cargar contenido
+      await loadPageContent(href);
+    });
+  });
+
+  // Manejar navegación hacia atrás/adelante
+  window.addEventListener("popstate", async () => {
+    const path = window.location.pathname;
+    // Actualizar active state según la URL
+    sidebarLinks.forEach((l) => {
+      const linkHref = (l as HTMLAnchorElement).getAttribute("href");
+      l.classList.toggle("active", linkHref === path);
+    });
+    await loadPageContent(path);
+  });
+
+  async function loadPageContent(path: string) {
+    if (!pageContent) return;
+
+    // Mostrar loading
+    pageContent.innerHTML = '<div class="admin-loading"><div class="spinner"></div><p>Cargando...</p></div>';
+
+    try {
+      const response = await fetch(path);
+      const html = await response.text();
+
+      // Extraer solo el contenido de #page-content del HTML recibido
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const newContent = doc.getElementById("page-content");
+
+      if (newContent) {
+        pageContent.innerHTML = newContent.innerHTML;
+
+        // Re-ejecutar scripts del contenido nuevo
+        pageContent.querySelectorAll("script").forEach((oldScript) => {
+          const newScript = document.createElement("script");
+          Array.from(oldScript.attributes).forEach((attr) => {
+            newScript.setAttribute(attr.name, attr.value);
+          });
+          newScript.textContent = oldScript.textContent;
+          oldScript.parentNode?.replaceChild(newScript, oldScript);
+        });
+      } else {
+        pageContent.innerHTML = '<p class="text-muted">Error al cargar el contenido.</p>';
+      }
+    } catch (err) {
+      pageContent.innerHTML = '<p class="text-muted">Error de conexión al cargar la página.</p>';
+    }
+  }
+
+  // ============================================
+  // Autenticación
+  // ============================================
+  // checkUserSite se importa de src/lib/site.ts
+  // La función recibe (uid, domain) y busca el sitio por dominio o por ownerId
+  // --- Verificar currentUser inmediatamente ---
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    await processUser(currentUser);
+  }
+
+  // --- Observer de cambios de auth ---
+  onAuthChange(async (user) => {
+    if (!user) {
+      showState("unauthenticated");
+      return;
+    }
+    // Solo procesar si no estamos ya autenticados (evita duplicados)
+    if (!currentSiteDomain) {
+      await processUser(user);
+    }
+  });
+
   function showState(state: "loading" | "unauthenticated" | "authenticated" | "no-site", siteDomain?: string, siteData?: any) {
     loadingState?.classList.add("hidden");
     unauthenticatedState?.classList.add("hidden");
@@ -162,12 +397,15 @@ const domain = getEffectiveDomain();
         authenticatedState?.classList.remove("hidden");
         currentSiteDomain = siteDomain || null;
         currentSiteData = siteData || null;
-        // Exponer en el DOM para que las páginas hijas lo lean
         if (adminApp) {
           if (currentSiteDomain) adminApp.dataset.siteDomain = currentSiteDomain;
           if (currentSiteData) adminApp.dataset.siteData = JSON.stringify(currentSiteData);
         }
-        // Disparar evento para que las páginas hijas sepan que ya hay datos
+        // Mostrar email del usuario en la topbar
+        const user = auth.currentUser;
+        if (user?.email && topbarUser) {
+          topbarUser.textContent = user.email;
+        }
         window.dispatchEvent(new CustomEvent("admin:ready", {
           detail: { siteDomain: currentSiteDomain, siteData: currentSiteData }
         }));
@@ -178,17 +416,9 @@ const domain = getEffectiveDomain();
     }
   }
 
-  // --- Observar cambios de autenticación ---
-  onAuthChange(async (user) => {
-    if (!user) {
-      showState("unauthenticated");
-      return;
-    }
-
-    // Usuario autenticado: verificar si tiene sitio (con fallback por ownerId)
-    const siteDomain = await checkUserSite(user.uid);
+  async function processUser(user: any) {
+    const siteDomain = await checkUserSite(user.uid, domain);
     if (siteDomain) {
-      // Cargar datos completos del sitio
       try {
         const result = await getDocument("sites", siteDomain);
         if (result.success && result.data) {
@@ -202,9 +432,51 @@ const domain = getEffectiveDomain();
     } else {
       showState("no-site");
     }
-  });
+  }
 
-  // --- Cerrar sesión ---
+  // ============================================
+  // Cargar rol del usuario desde members/{uid}
+  // ============================================
+  async function loadUserRole(siteDomain: string): Promise<string | null> {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return null;
+
+    // Intentar obtener el documento del miembro
+    const result = await getDocument("sites/" + siteDomain + "/members", uid);
+    if (result.success && result.data) {
+      return (result.data as any).role;
+    }
+
+    // Si no existe, el usuario es el owner (creado durante onboarding)
+    const siteData = adminApp?.dataset.siteData;
+    if (siteData) {
+      try {
+        const parsed = JSON.parse(siteData);
+        if (parsed.ownerId === uid) return "admin";
+      } catch { /* ignore */ }
+    }
+
+    return null;
+  }
+
+  // Exponer loadUserRole globalmente para que otros componentes lo usen
+  (window as any).__loadUserRole = loadUserRole;
+
+  // Exponer el usuario autenticado globalmente para scripts hijos (navegación SPA)
+  // Esto evita que los scripts hijos tengan que esperar a auth.currentUser
+  const currentUserForExport = auth.currentUser;
+  if (currentUserForExport) {
+    (window as any).__currentUser = {
+      uid: currentUserForExport.uid,
+      email: currentUserForExport.email,
+      displayName: currentUserForExport.displayName,
+      photoURL: currentUserForExport.photoURL,
+    };
+  }
+
+  // ============================================
+  // Logout
+  // ============================================
   async function handleLogout() {
     try {
       await logoutUser();
@@ -217,7 +489,9 @@ const domain = getEffectiveDomain();
   btnLogout?.addEventListener("click", handleLogout);
   btnLogoutNoSite?.addEventListener("click", handleLogout);
 
-  // --- Recargar página ---
+  // ============================================
+  // Recargar página
+  // ============================================
   btnRefresh?.addEventListener("click", () => {
     window.location.reload();
   });

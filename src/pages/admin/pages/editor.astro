@@ -1,0 +1,517 @@
+---
+// ============================================
+// /admin/pages/editor — Editor Dedicado de Páginas (3 Columnas)
+// ============================================
+// Herramienta visual interactiva basada en bloques estilo WordPress.
+// Incluye Inserter de Bloques, Lienzo WYSIWYG, Simulador Responsivo e Inspector.
+// ============================================
+
+import AdminLayout from "../../../components/admin/AdminLayout.astro";
+---
+
+<AdminLayout>
+  <!-- ============================================ -->
+  <!-- TopBar: Navegación, Simulador Responsivo y Guardado -->
+  <!-- ============================================ -->
+  <header class="editor-topbar">
+    <div class="editor-topbar__left">
+      <a href="/admin/pages" class="btn btn-secondary btn-sm" id="btn-back-pages">
+        ← Volver
+      </a>
+      <h2 id="editor-heading" class="editor-topbar__title">
+        Editor de Página
+      </h2>
+    </div>
+
+    <!-- Simulador de Dispositivos (Viewport Switcher) -->
+    <div class="viewport-switcher">
+      <button type="button" class="btn-viewport active" data-viewport="desktop" title="Vista Escritorio (100%)">
+        💻 <span class="viewport-label">Escritorio</span>
+      </button>
+      <button type="button" class="btn-viewport" data-viewport="tablet" title="Vista Tablet (768px)">
+        📱 <span class="viewport-label">Tablet</span>
+      </button>
+      <button type="button" class="btn-viewport" data-viewport="mobile" title="Vista Móvil (375px)">
+        📱 <span class="viewport-label">Móvil</span>
+      </button>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="editor-topbar__actions">
+      <span id="draft-status-indicator" class="draft-indicator"></span>
+      <a href="#" target="_blank" id="btn-preview-page" class="btn btn-secondary btn-sm hidden" title="Ver vista previa pública">
+        👁️ <span class="action-label">Vista previa</span>
+      </a>
+      <button type="button" id="btn-save-draft" class="btn btn-secondary btn-sm" title="Guardar como borrador (no público)">
+        💾 <span class="action-label">Borrador</span>
+      </button>
+      <button type="button" id="btn-save-editor" class="btn btn-primary btn-sm" title="Publicar cambios en la web">
+        🚀 <span class="action-label">Publicar</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================ -->
+  <!-- Banner Alerta de Borrador Local Recuperable -->
+  <!-- ============================================ -->
+  <div id="draft-restore-banner" class="hidden draft-banner">
+    <div class="draft-banner__info">
+      <span style="font-size: 1.25rem;">⚠️</span>
+      <div>
+        <strong>Borrador sin guardar disponible</strong>
+        <p>Se encontraron modificaciones recientes no guardadas en tu navegador.</p>
+      </div>
+    </div>
+    <div class="draft-banner__actions">
+      <button type="button" id="btn-restore-draft-action" class="btn btn-primary btn-sm" style="background: #faad14; border-color: #d48806; color: #fff;">
+        📋 Restaurar
+      </button>
+      <button type="button" id="btn-discard-draft-action" class="btn btn-secondary btn-sm">
+        🗑️ Descartar
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Workspace de 3 Columnas -->
+  <!-- ============================================ -->
+  <div class="editor-workspace">
+
+    <!-- ============================================ -->
+    <!-- COLUMNA 1: Inserter de Bloques (Biblioteca Izquierda) -->
+    <!-- ============================================ -->
+    <aside class="card editor-inserter" id="inserter-sidebar">
+      <h3 class="editor-inserter__title">
+        ➕ Añadir Bloques
+      </h3>
+
+      <!-- Buscador de Bloques -->
+      <div style="margin-bottom: 0.75rem;">
+        <input type="text" id="inserter-search" placeholder="🔍 Buscar bloque..." class="editor-inserter__search" />
+      </div>
+
+      <div id="inserter-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Los botones de inserción categorizados se generan desde JS -->
+      </div>
+    </aside>
+
+    <!-- ============================================ -->
+    <!-- COLUMNA 2: Lienzo Central de Edición (Canvas WYSIWYG) -->
+    <!-- ============================================ -->
+    <main class="editor-canvas">
+      <div id="viewport-frame" style="width: 100%; transition: width 0.3s ease, max-width 0.3s ease; margin: 0 auto;">
+        <div class="card" style="min-height: 600px; padding: 2rem; background: var(--bg-card, #ffffff); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+
+          <!-- Estado vacío (cuando no hay bloques) -->
+          <div id="canvas-empty-state" style="text-align: center; padding: 4rem 1rem; border: 2px dashed var(--border-color, #d1d5db); border-radius: 8px;">
+            <p style="font-size: 1.25rem; font-weight: bold; color: var(--text-color, #374151); margin-bottom: 0.5rem;">Tu página está vacía</p>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">Haz clic en cualquier bloque del panel izquierdo para empezar a maquetar.</p>
+          </div>
+
+          <!-- Contenedor dinámico de bloques -->
+          <div id="canvas-blocks-container" style="display: flex; flex-direction: column; gap: 1.5rem;"></div>
+
+        </div>
+      </div>
+
+      <!-- Barra de Formato Flotante Contextual (Bubble Toolbar Menu) -->
+      <div id="floating-rich-toolbar" class="floating-toolbar hidden">
+        <button type="button" class="btn-rich-fmt" data-cmd="bold" title="Negrita (Ctrl+B)"><strong>B</strong></button>
+        <button type="button" class="btn-rich-fmt" data-cmd="italic" title="Cursiva (Ctrl+I)"><em>I</em></button>
+        <button type="button" class="btn-rich-fmt" data-cmd="underline" title="Subrayado (Ctrl+U)"><u>U</u></button>
+        <button type="button" class="btn-rich-fmt" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
+        <button type="button" class="btn-rich-fmt" data-cmd="insertUnorderedList" title="Lista con viñetas">• Lista</button>
+        <button type="button" class="btn-rich-fmt" data-cmd="createLink" title="Insertar Enlace">🔗 Enlace</button>
+        <button type="button" class="btn-rich-fmt" data-cmd="removeFormat" title="Limpiar formato">🧹</button>
+      </div>
+    </main>
+
+    <!-- ============================================ -->
+    <!-- COLUMNA 3: Inspector Lateral (Ajustes Derecha) -->
+    <!-- ============================================ -->
+    <aside class="card editor-inspector" id="inspector-sidebar">
+      <!-- Pestañas del Inspector -->
+      <div class="editor-inspector__tabs">
+        <button type="button" class="btn-inspector-tab active" data-tab="page">
+          ⚙️ Página
+        </button>
+        <button type="button" class="btn-inspector-tab" data-tab="block">
+          🎨 Bloque
+        </button>
+      </div>
+
+      <!-- TAB 1: Ajustes de Página -->
+      <div id="tab-page-content">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="editor-page-title" style="font-weight: 500; font-size: 0.875rem;">Título de la página *</label>
+          <input type="text" id="editor-page-title" placeholder="Ej. Acerca de Nosotros" required style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db;" />
+          <p class="field-error" id="err-editor-title">El título es obligatorio.</p>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="editor-page-slug" style="font-weight: 500; font-size: 0.875rem;">Slug / URL limpia *</label>
+          <input type="text" id="editor-page-slug" placeholder="ej. acerca-de" required style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db;" />
+          <p class="field-error" id="err-editor-slug">El slug es obligatorio.</p>
+        </div>
+
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" id="editor-page-published" checked />
+            <span>Publicada</span>
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+            <input type="checkbox" id="editor-page-show-in-nav" />
+            <span>Mostrar en menú de navegación</span>
+          </label>
+        </div>
+
+        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: bold;">SEO y Meta</h4>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="editor-seo-title" style="font-weight: 500; font-size: 0.875rem;">Título SEO</label>
+          <input type="text" id="editor-seo-title" placeholder="Título para buscadores" style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db;" />
+        </div>
+
+        <div class="form-group">
+          <label for="editor-seo-desc" style="font-weight: 500; font-size: 0.875rem;">Descripción SEO</label>
+          <textarea id="editor-seo-desc" rows="3" placeholder="Resumen para buscadores" style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db;"></textarea>
+        </div>
+      </div>
+
+      <!-- TAB 2: Ajustes de Bloque Seleccionado -->
+      <div id="tab-block-content" class="hidden">
+        <div id="no-block-selected-msg" style="text-align: center; padding: 2rem 0; color: #6b7280;">
+          <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</p>
+          <p style="font-weight: bold; margin-bottom: 0.25rem;">Selecciona un bloque</p>
+          <p style="font-size: 0.85rem;">Haz clic en un bloque del lienzo central para editar sus propiedades.</p>
+        </div>
+
+        <!-- Formulario dinámico de ajustes de bloque -->
+        <div id="block-controls-container" class="hidden">
+          <h4 id="selected-block-type-name" style="margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: bold; color: var(--primary-color, #6366f1);">
+            Propiedades del Bloque
+          </h4>
+          <div id="block-dynamic-fields"></div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Feedback global -->
+  <div id="save-feedback" class="hidden" style="margin-top: 1rem; position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 2000;"></div>
+</AdminLayout>
+
+<style>
+  /* ============================================ */
+  /* TopBar */
+  /* ============================================ */
+  .editor-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card, #ffffff);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .editor-topbar__left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .editor-topbar__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .editor-topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .draft-indicator {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+    margin-right: 0.25rem;
+  }
+
+  /* Viewport Switcher */
+  .viewport-switcher {
+    display: flex;
+    background: var(--bg-muted, #f3f4f6);
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid var(--border-color, #e5e7eb);
+  }
+  .btn-viewport {
+    border: none;
+    background: transparent;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .btn-viewport.active {
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  /* ============================================ */
+  /* Draft Restore Banner */
+  /* ============================================ */
+  .draft-banner {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-wrap: wrap;
+  }
+  .draft-banner__info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .draft-banner__info strong {
+    font-size: 0.9rem;
+    color: #d48806;
+  }
+  .draft-banner__info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #8c6800;
+  }
+  .draft-banner__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  /* ============================================ */
+  /* Workspace 3 columnas */
+  /* ============================================ */
+  .editor-workspace {
+    display: grid;
+    grid-template-columns: 260px 1fr 320px;
+    gap: 1.25rem;
+    min-height: calc(100vh - 180px);
+    align-items: start;
+  }
+  .editor-inserter {
+    padding: 1rem;
+    position: sticky;
+    top: 1rem;
+  }
+  .editor-inserter__title {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    padding-bottom: 0.5rem;
+  }
+  .editor-inserter__search {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #d1d5db);
+    font-size: 0.85rem;
+  }
+  .editor-canvas {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+  }
+  .editor-inspector {
+    padding: 1rem;
+    position: sticky;
+    top: 1rem;
+  }
+  .editor-inspector__tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    margin-bottom: 1rem;
+  }
+  .btn-inspector-tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  .btn-inspector-tab.active {
+    border-bottom: 2px solid var(--primary-color, #6366f1);
+    color: var(--primary-color, #6366f1);
+  }
+
+  /* ============================================ */
+  /* Block Canvas Items */
+  /* ============================================ */
+  .block-canvas-item {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 0.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .block-canvas-item:hover {
+    border-color: #a5b4fc;
+  }
+  .block-canvas-item.selected {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+  .block-actions-bar {
+    position: absolute;
+    top: -14px;
+    right: 12px;
+    background: #1e293b;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 2px 6px;
+    display: flex;
+    gap: 4px;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  .block-action-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  .block-action-btn:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* ============================================ */
+  /* Barra Flotante de Formato Enriquecido (Bubble Menu) */
+  /* ============================================ */
+  .floating-toolbar {
+    position: absolute;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    background: #1e293b;
+    color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .btn-rich-fmt {
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-rich-fmt:hover {
+    background: #334155;
+    color: #ffffff;
+  }
+
+  /* ============================================ */
+  /* RESPONSIVE: Tablet (≤1024px) → 2 columnas */
+  /* ============================================ */
+  @media (max-width: 1024px) {
+    .editor-workspace {
+      grid-template-columns: 1fr 320px;
+    }
+    .editor-inserter {
+      grid-column: 1 / -1;
+      position: static;
+    }
+    /* En tablet: inserter pasa a fila horizontal de botones */
+    .editor-inserter :global(#inserter-list) {
+      flex-direction: row !important;
+      flex-wrap: wrap;
+    }
+    .viewport-label {
+      display: none;
+    }
+  }
+
+  /* ============================================ */
+  /* RESPONSIVE: Móvil (≤768px) → 1 columna apilada */
+  /* ============================================ */
+  @media (max-width: 768px) {
+    .editor-topbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+    .editor-topbar__left {
+      justify-content: space-between;
+    }
+    .editor-topbar__actions {
+      justify-content: center;
+    }
+    .viewport-switcher {
+      align-self: center;
+    }
+    .editor-workspace {
+      grid-template-columns: 1fr;
+    }
+    .editor-inserter,
+    .editor-inspector {
+      position: static;
+    }
+    .editor-canvas :global(.card) {
+      padding: 1rem !important;
+      min-height: 400px !important;
+    }
+    .draft-banner {
+      flex-direction: column;
+      text-align: center;
+    }
+    .draft-banner__actions {
+      width: 100%;
+      justify-content: center;
+    }
+    .action-label {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { initPageEditorConfig } from "../../../components/admin/PageEditorConfig";
+  initPageEditorConfig();
+</script>
+

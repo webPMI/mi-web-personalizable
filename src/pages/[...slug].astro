@@ -1,0 +1,153 @@
+---
+// ============================================
+// /[...slug].astro — Renderizado público de páginas dinámicas
+// ============================================
+// Captura rutas personalizadas creadas por el usuario (ej: /acerca-de, /contacto)
+// Consulta la subcolección de páginas en Firestore y renderiza mediante BlockRegistry.
+// ============================================
+// Esta ruta se renderiza completamente del lado del cliente (CSR) mediante
+// JavaScript que consulta Firestore. No se pre-renderiza estáticamente.
+// ============================================
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import DevTools from "../components/devtools/DevTools.astro";
+---
+
+<Layout title="Cargando...">
+  <div id="loading" style="text-align: center; padding: 4rem 1rem;">
+    <p>Cargando página...</p>
+  </div>
+
+  <div id="custom-page-container" class="hidden"></div>
+
+  <div
+    id="not-found-container"
+    class="hidden"
+    style="text-align: center; padding: 4rem 1rem;"
+  >
+    <h1>404 - Página no encontrada</h1>
+    <p class="text-muted">
+      La página que buscas no existe o no se encuentra publicada.
+    </p>
+    <a
+      href="/"
+      class="btn btn-primary"
+      style="display: inline-block; margin-top: 1rem;">Volver al inicio</a
+    >
+  </div>
+
+  <DevTools />
+</Layout>
+
+<script>
+  import { getEffectiveDomain } from "../lib/domain-check";
+  import { getSiteData, getPageBySlug } from "../lib/site";
+  import type { SiteData, CustomPage } from "../lib/site";
+  import { sanitizeText } from "../lib/sanitizer";
+  import { BlockRegistry } from "../lib/blocks/BlockRegistry";
+  import { applyThemeToElement } from "../lib/theme";
+
+  const loadingEl = document.getElementById("loading");
+  const pageContainer = document.getElementById("custom-page-container");
+  const notFoundContainer = document.getElementById("not-found-container");
+
+  async function loadCustomPage() {
+    const domain = getEffectiveDomain();
+    const site = await getSiteData(domain);
+    const pathname = window.location.pathname.replace(/^\/+|\/+$/g, ""); // Quitar slashes extremos
+
+    if (!site) {
+      showNotFound();
+      return;
+    }
+
+    // 1. Obtener la página desde la subcolección o fallback legacy
+    const page = await getPageBySlug(domain, pathname);
+
+    if (!page || (page.published === false && page.status !== "published")) {
+      showNotFound();
+      return;
+    }
+
+    // Actualizar título e información SEO de la ventana
+    document.title =
+      page.seo?.metaTitle ||
+      page.seoTitle ||
+      page.title ||
+      site.siteName ||
+      "Página";
+
+    // Renderizar Navbar y Bloques de la Página
+    renderPage(site, page);
+  }
+
+  function showNotFound() {
+    loadingEl?.classList.add("hidden");
+    notFoundContainer?.classList.remove("hidden");
+  }
+
+  function renderPage(site: SiteData, page: CustomPage) {
+    if (!pageContainer) return;
+
+    if (site.theme) {
+      applyThemeToElement(pageContainer, site.theme);
+    }
+
+    const navLinksHtml =
+      site.navLinks && site.navLinks.length > 0
+        ? site.navLinks
+            .map(
+              (link) =>
+                `<a href="${sanitizeText(link.href)}" class="navbar-link">${sanitizeText(link.label)}</a>`,
+            )
+            .join("")
+        : "";
+
+    const siteName = sanitizeText(site.siteName || "Mi Web");
+    const pageTitle = sanitizeText(page.title);
+
+    // Renderizado de bloques o fallback a texto plano
+    let bodyContentHtml = "";
+    if (page.blocks && page.blocks.length > 0) {
+      bodyContentHtml = page.blocks
+        .map((block) => BlockRegistry.render(block))
+        .join("");
+    } else {
+      const pageContent = sanitizeText(page.content).replace(/\n/g, "<br />");
+      bodyContentHtml = `
+        <h1 style="font-size: 2.25rem; margin-bottom: 1.5rem; font-weight: bold;">${pageTitle}</h1>
+        <div class="page-body" style="font-size: 1.125rem; line-height: 1.7; color: #374151;">
+          ${pageContent}
+        </div>
+      `;
+    }
+
+    pageContainer.innerHTML = `
+      <header class="navbar" style="border-bottom: 1px solid #e5e7eb; padding: 1rem 0;">
+        <div class="container navbar-inner" style="max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem;">
+          <a href="/" class="navbar-brand" style="font-weight: bold; text-decoration: none; font-size: 1.25rem; color: inherit;">${siteName}</a>
+          <nav class="navbar-links" style="display: flex; gap: 1.5rem;">
+            <a href="/" class="navbar-link">Inicio</a>
+            ${navLinksHtml}
+          </nav>
+        </div>
+      </header>
+
+      <main class="page-content" style="max-width: 1000px; margin: 3rem auto; padding: 0 1rem; min-height: 50vh;">
+        ${bodyContentHtml}
+      </main>
+
+      <footer class="footer" style="border-top: 1px solid #e5e7eb; padding: 2rem 0; text-align: center; color: #6b7280; font-size: 0.875rem; margin-top: 3rem;">
+        <div class="container">
+          <p>© ${new Date().getFullYear()} ${siteName}. Todos los derechos reservados.</p>
+        </div>
+      </footer>
+    `;
+
+    loadingEl?.classList.add("hidden");
+    pageContainer.classList.remove("hidden");
+  }
+
+  loadCustomPage();
+</script>
