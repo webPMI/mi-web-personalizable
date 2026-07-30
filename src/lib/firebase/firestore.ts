@@ -21,7 +21,7 @@ import {
   type FirestoreError,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import type { FirestoreResponse } from "../../types/firebase";
+import type { FirestoreResponse } from "../types/firebase";
 
 /**
  * Elimina recursivamente propiedades con valor undefined de un objeto antes de enviarlo a Firestore.

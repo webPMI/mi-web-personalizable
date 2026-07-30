@@ -12,7 +12,7 @@ import {
   type UploadTask,
 } from "firebase/storage";
 import { storage } from "../firebase";
-import type { UploadResult } from "../../types/firebase";
+import type { UploadResult } from "../types/firebase";
 
 // --- Subir archivo ---
 export async function uploadFile(

@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import type { AuthResponse } from "../../types/firebase";
+import type { AuthResponse } from "../types/firebase";
 
 // --- Registro ---
 export async function registerUser(

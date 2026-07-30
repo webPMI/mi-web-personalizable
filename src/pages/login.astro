@@ -59,7 +59,7 @@ import DevTools from "../components/devtools/DevTools.astro";
 
         <div id="login-error" class="alert alert-error hidden"></div>
 
-        <button type="submit" id="btn-login" class="btn btn-primary btn-lg btn-full">
+        <button type="submit" id="btn-login" class="btn-login btn-lg btn-full">
           Iniciar sesión
         </button>
       </form>
@@ -240,6 +240,17 @@ import DevTools from "../components/devtools/DevTools.astro";
 </script>
 
 <style>
+  .btn-login{
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
   .login-page {
     display: flex;
     align-items: center;
