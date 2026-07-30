@@ -1,9 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import DevTools from "../components/devtools/DevTools.astro";
+import { t } from "../lib/i18n";
 ---
 
-<Layout title="Iniciar sesión">
+const locale = Astro.locals.locale || "es";
+
+<Layout title={t("login:login-title")}>
   <DevTools />
   <div class="login-page">
     <div class="login-card">
@@ -15,8 +18,8 @@ import DevTools from "../components/devtools/DevTools.astro";
             <line x1="9" y1="21" x2="9" y2="9"/>
           </svg>
         </div>
-        <h1 class="login-title">Iniciar sesión</h1>
-        <p class="login-subtitle">Accede al panel de administración de tu sitio</p>
+        <h1 class="login-title">{t("login:login-title")}</h1>
+        <p class="login-subtitle">{t("login:login-subtitle")}</p>
       </div>
 
       <!-- Botón de Google -->
@@ -27,26 +30,26 @@ import DevTools from "../components/devtools/DevTools.astro";
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-        Iniciar sesión con Google
+        {t("login:btn-google")}
       </button>
 
       <!-- Separador -->
       <div class="divider">
-        <span class="divider-text">o con correo electrónico</span>
+        <span class="divider-text">{t("login:divider-text")}</span>
       </div>
 
       <!-- Formulario de email/password -->
       <form id="login-form" class="login-form" novalidate>
         <div class="form-group" id="fg-email">
-          <label for="email">Correo electrónico</label>
-          <input type="email" id="email" placeholder="tu@email.com" autocomplete="email" autofocus />
+          <label for="email">{t("login:label-email")}</label>
+          <input type="email" id="email" placeholder={t("login:placeholder-email")} autocomplete="email" autofocus />
           <p class="field-error" id="err-email"></p>
         </div>
 
         <div class="form-group" id="fg-password">
-          <label for="password">Contraseña</label>
+          <label for="password">{t("login:label-password")}</label>
           <div class="password-field">
-            <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password" />
+            <input type="password" id="password" placeholder={t("login:placeholder-password")} autocomplete="current-password" />
             <button type="button" class="password-toggle-btn" id="toggle-password">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -60,33 +63,33 @@ import DevTools from "../components/devtools/DevTools.astro";
         <div id="login-error" class="alert alert-error hidden"></div>
 
         <button type="submit" id="btn-login" class="btn-login btn-lg btn-full">
-          Iniciar sesión
+          {t("login:btn-login")}
         </button>
       </form>
 
       <!-- Estados de carga -->
       <div id="loading-login" class="hidden loading-state">
         <div class="spinner"></div>
-        <p>Verificando credenciales...</p>
+        <p>{t("login:login-loading")}</p>
       </div>
 
       <div id="role-checking" class="hidden loading-state">
         <div class="spinner"></div>
-        <p>Verificando permisos de acceso...</p>
+        <p>{t("login:role-checking")}</p>
       </div>
 
       <!-- Acceso denegado -->
       <div id="access-denied" class="hidden">
         <div class="alert alert-error">
-          <h3>Acceso denegado</h3>
-          <p>No tienes permisos para acceder al panel de administración de este sitio.</p>
-          <p class="text-muted">Contacta al administrador del sitio si necesitas acceso.</p>
+          <h3>{t("login:access-denied-title")}</h3>
+          <p>{t("login:access-denied-desc")}</p>
+          <p class="text-muted">{t("login:access-denied-contact")}</p>
         </div>
-        <a href="/" class="btn btn-secondary mt-md">Volver al inicio</a>
+        <a href="/" class="btn btn-secondary mt-md">{t("login:back-home")}</a>
       </div>
 
       <div class="login-footer">
-        <a href="/" class="text-muted">← Volver al inicio</a>
+        <a href="/" class="text-muted">{t("login:back-home")}</a>
       </div>
     </div>
   </div>
@@ -98,6 +101,7 @@ import DevTools from "../components/devtools/DevTools.astro";
   import { getEffectiveDomain } from "../lib/domain-check";
   import { onAuthChange } from "../lib/firebase/auth";
   import { showFieldError, clearAllErrors, clearErrorOnInput } from "../lib/ui-helpers";
+  import { t } from "../lib/i18n";
 
   const form = document.getElementById("login-form") as HTMLFormElement;
   const emailInput = document.getElementById("email") as HTMLInputElement;
@@ -188,17 +192,17 @@ import DevTools from "../components/devtools/DevTools.astro";
 
     let hasError = false;
     if (!email) {
-      showFieldError("fg-email", "El correo electrónico es obligatorio.");
+      showFieldError("fg-email", t("login:err-email-empty"));
       emailInput?.focus();
       hasError = true;
     } else if (!email.includes("@") || !email.includes(".")) {
-      showFieldError("fg-email", "El correo electrónico no es válido.");
+      showFieldError("fg-email", t("login:err-email-invalid"));
       if (!hasError) emailInput?.focus();
       hasError = true;
     }
 
     if (!password) {
-      showFieldError("fg-password", "La contraseña es obligatoria.");
+      showFieldError("fg-password", t("login:err-password-empty"));
       if (!hasError) passwordInput?.focus();
       hasError = true;
     }
@@ -211,7 +215,7 @@ import DevTools from "../components/devtools/DevTools.astro";
 
     if (!result.success) {
       showLoading(false);
-      loginError!.textContent = result.error || "Error al iniciar sesión.";
+      loginError!.textContent = result.error || t("login:err-login-generic");
       loginError?.classList.remove("hidden");
       return;
     }
@@ -228,8 +232,8 @@ import DevTools from "../components/devtools/DevTools.astro";
 
     if (!result.success) {
       showLoading(false);
-      if (result.error !== "Inicio de sesión cancelado.") {
-        loginError!.textContent = result.error || "Error al iniciar sesión con Google.";
+      if (result.error !== t("login:err-login-canceled")) {
+        loginError!.textContent = result.error || t("login:err-login-google");
         loginError?.classList.remove("hidden");
       }
       return;

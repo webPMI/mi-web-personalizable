@@ -1,0 +1,90 @@
+---
+// ============================================
+// LanguageSelector — Selector de idioma ES/EN
+// ============================================
+// Recibe el locale actual como prop para SSR.
+// En cliente, el script maneja el cambio vía localStorage + cookie.
+
+export interface Props {
+  locale?: string;
+}
+
+const { locale = "es" } = Astro.props;
+const currentLocale = locale === "en" ? "en" : "es";
+---
+
+<div class="language-selector" data-current-locale={currentLocale}>
+  <button
+    class="lang-btn"
+    class:list={{ "lang-active": currentLocale === "es" }}
+    data-lang="es"
+    aria-label="Español"
+  >
+    ES
+  </button>
+  <span class="lang-separator">|</span>
+  <button
+    class="lang-btn"
+    class:list={{ "lang-active": currentLocale === "en" }}
+    data-lang="en"
+    aria-label="English"
+  >
+    EN
+  </button>
+</div>
+
+<script>
+  import { changeLanguage } from "./LanguageSelectorClient";
+
+  const container = document.querySelector(".language-selector");
+  if (container) {
+    container.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest("[data-lang]");
+      if (btn) {
+        const lang = btn.getAttribute("data-lang") as "es" | "en";
+        changeLanguage(lang);
+      }
+    });
+  }
+</script>
+
+<style>
+  .language-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  .lang-btn {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .lang-btn:hover {
+    color: #374151;
+  }
+
+  .lang-btn.lang-active {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .lang-separator {
+    color: #d1d5db;
+    font-size: 0.75rem;
+  }
+</style>

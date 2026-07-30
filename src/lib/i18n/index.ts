@@ -28,9 +28,11 @@ export function registerTranslations(namespace: string, module: TranslationModul
 }
 
 /**
- * Obtiene el locale almacenado o el predeterminado
+ * Obtiene el locale almacenado o el predeterminado.
+ * Si se proporciona serverLocale (desde middleware SSR), se usa ese.
  */
-export function getStoredLocale(): SupportedLocale {
+export function getStoredLocale(serverLocale?: string): SupportedLocale {
+  if (serverLocale === "es" || serverLocale === "en") return serverLocale;
   if (typeof window === "undefined") return "es";
   const stored = window.localStorage.getItem("app-locale");
   if (stored === "es" || stored === "en") return stored;
@@ -47,10 +49,32 @@ export function setStoredLocale(locale: SupportedLocale): void {
 }
 
 /**
- * Obtiene el locale actual
+ * Obtiene el locale actual, priorizando el locale del servidor si se proporciona.
+ * Útil para unificar SSR y cliente.
  */
-export function getLocale(): SupportedLocale {
-  return getStoredLocale();
+export function getCurrentLocale(locale?: string): SupportedLocale {
+  return getStoredLocale(locale);
+}
+
+/**
+ * Obtiene el locale actual (alias de getCurrentLocale)
+ */
+export function getLocale(locale?: string): SupportedLocale {
+  return getCurrentLocale(locale);
+}
+
+/**
+ * Lee el locale desde la cookie `app-locale` de un objeto Request.
+ * Útil en middleware SSR para detectar el idioma del usuario.
+ */
+export function getLocaleFromCookie(request: Request): SupportedLocale {
+  const cookieHeader = request.headers.get("cookie") || "";
+  const match = cookieHeader.match(/(?:^|;\s*)app-locale=(\w+)/);
+  if (match) {
+    const val = match[1] as SupportedLocale;
+    if (val === "es" || val === "en") return val;
+  }
+  return "es";
 }
 
 /**
@@ -65,8 +89,8 @@ export function getLocale(): SupportedLocale {
  * t("common:btn-continue")
  * t("onboarding:success-welcome", { name: "Juan" })
  */
-export function t(key: string, params?: Record<string, string>): string {
-  const locale = getStoredLocale();
+export function t(key: string, params?: Record<string, string>, locale?: string): string {
+  const currentLocale = getStoredLocale(locale);
 
   // Separar namespace y key
   const colonIndex = key.indexOf(":");
@@ -84,14 +108,13 @@ export function t(key: string, params?: Record<string, string>): string {
     return key;
   }
 
-  const translations = module[locale];
+  const translations = module[currentLocale];
   let text = translations[actualKey];
 
   if (text === undefined) {
     // Fallback al otro locale si no se encuentra
-    const fallbackLocale = locale === "es" ? "en" : "es";
-    const fallbackTranslations = module[fallbackLocale];
-    text = fallbackTranslations[actualKey];
+    const fallbackLocale = currentLocale === "es" ? "en" : "es";
+    text = module[fallbackLocale][actualKey];
   }
 
   if (text === undefined) {

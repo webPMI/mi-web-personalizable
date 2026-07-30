@@ -2,11 +2,14 @@
 import Layout from "../layouts/Layout.astro";
 import OnboardingWizard from "../components/admin/OnboardingWizard.astro";
 import DevTools from "../components/devtools/DevTools.astro";
+import { t } from "../lib/i18n";
 ---
 
-<Layout title="Inicio">
+const locale = Astro.locals.locale || "es";
+
+<Layout title={t("home:title-home")}>
   <div id="loading">
-    <p>Cargando...</p>
+    <p>{t("home:loading-text")}</p>
   </div>
 
   <div id="onboarding" class="hidden">
@@ -23,6 +26,7 @@ import DevTools from "../components/devtools/DevTools.astro";
   import { getSiteData, getSiteByOwnerId } from "../lib/site";
   import type { SiteData } from "../lib/site";
   import { onAuthChange } from "../lib/firebase/auth";
+  import { t } from "../lib/i18n";
 
   const loading = document.getElementById("loading");
   const onboarding = document.getElementById("onboarding");
@@ -33,7 +37,7 @@ import DevTools from "../components/devtools/DevTools.astro";
   // ============================================
 
   function renderNavbar(site: SiteData): string {
-    const displayName = site.siteName || "Mi Web Personalizable";
+    const displayName = site.siteName || t("home:site-default-name");
     if (!site.navLinks || site.navLinks.length === 0) return "";
     return `
       <header class="navbar">
@@ -130,12 +134,12 @@ import DevTools from "../components/devtools/DevTools.astro";
   }
 
   function renderFooter(site: SiteData): string {
-    const displayName = site.siteName || "Mi Web Personalizable";
+    const displayName = site.siteName || t("home:site-default-name");
     const year = new Date().getFullYear();
     return `
       <footer class="site-footer">
         <div class="container footer-inner">
-          <p class="footer-copy">&copy; ${year} ${displayName}. Todos los derechos reservados.</p>
+          <p class="footer-copy">&copy; ${year} ${displayName}. ${t("home:footer-rights")}</p>
           ${site.navLinks && site.navLinks.length > 0 ? `
             <nav class="footer-links">
               ${site.navLinks.map((link) => `<a href="${link.href}" class="footer-link">${link.label}</a>`).join("")}

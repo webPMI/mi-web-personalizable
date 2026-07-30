@@ -16,12 +16,16 @@ import commonModule from "./i18n/modules/common";
 import onboardingModule from "./i18n/modules/onboarding";
 import adminModule from "./i18n/modules/admin";
 import publicModule from "./i18n/modules/public";
+import loginModule from "./i18n/modules/login";
+import homeModule from "./i18n/modules/home";
 
 // Registrar módulos al cargar
 registerTranslations("common", commonModule);
 registerTranslations("onboarding", onboardingModule);
 registerTranslations("admin", adminModule);
 registerTranslations("public", publicModule);
+registerTranslations("login", loginModule);
+registerTranslations("home", homeModule);
 
 // Re-exportar todo desde el core
 export {
@@ -29,6 +33,8 @@ export {
   getStoredLocale,
   setStoredLocale,
   getLocale,
+  getCurrentLocale,
+  getLocaleFromCookie,
   registerTranslations,
   loadTranslations,
 } from "./i18n/index";
