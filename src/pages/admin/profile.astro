@@ -1,94 +1,132 @@
 ---
-// ============================================
-// /admin/profile — Perfil del Usuario
-// ============================================
-// Permite al usuario autenticado ver y editar
-// su información personal y cambiar contraseña.
-// ============================================
-
 import AdminLayout from "../../components/admin/AdminLayout.astro";
 ---
 
 <AdminLayout>
-  <div class="card">
-    <div class="card-header" data-i18n="title-profile">Mi Perfil</div>
-    <p class="text-muted" data-i18n="desc-profile">Gestiona tu información personal y contraseña.</p>
+  <div id="profile-loading" class="admin-loading">
+    <div class="spinner"></div>
+    <p>Cargando perfil...</p>
+  </div>
 
-    <form id="profile-form">
-      <!-- SECCIÓN: Información personal -->
-      <h3 class="section-title" data-i18n="profile-section-personal">Información Personal</h3>
-
-      <div class="form-group">
-        <label for="profile-email" data-i18n="profile-label-email">Email</label>
-        <input type="email" id="profile-email" disabled />
-        <p class="field-hint" data-i18n="profile-hint-email">El email no se puede modificar.</p>
+  <form id="profile-form" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <h1>Mi Perfil</h1>
       </div>
+      <p class="text-muted">Gestiona tu información personal y contraseña.</p>
 
-      <div class="form-group" id="fg-profile-name">
-        <label for="profile-name" data-i18n="profile-label-name">Nombre visible</label>
-        <input type="text" id="profile-name" placeholder="Tu nombre" data-i18n-placeholder="profile-placeholder-name" />
-        <p class="field-error hidden" id="profile-name-error" data-i18n="profile-error-name-required">El nombre es obligatorio.</p>
-      </div>
+      <div>
+        <!-- SECCIÓN: Información Personal -->
+        <h3 class="section-title">Información Personal</h3>
 
-      <div class="form-group" id="fg-profile-photo">
-        <label for="profile-photo" data-i18n="profile-label-photo">URL de foto de perfil</label>
-        <div class="profile-photo-row">
-          <div class="profile-photo-input-wrap">
-            <input type="url" id="profile-photo" placeholder="https://ejemplo.com/foto.jpg" data-i18n-placeholder="profile-placeholder-photo" />
-            <p class="field-hint" data-i18n="profile-hint-photo">Introduce una URL válida para tu foto de perfil.</p>
-            <p class="field-error hidden" id="profile-photo-url-error" data-i18n="profile-error-photo-url">La URL de la foto no es válida.</p>
-          </div>
-          <div class="profile-photo-preview-wrap">
-            <img id="profile-photo-preview" class="profile-photo-preview hidden" src="" alt="Foto de perfil" data-i18n-alt="profile-photo-preview-alt" />
-            <div id="profile-photo-placeholder" class="profile-photo-placeholder">
-              <span data-i18n="profile-photo-preview-alt">?</span>
-            </div>
-          </div>
+        <div class="form-group">
+          <label for="profile-email">Email</label>
+          <input type="email" id="profile-email" disabled />
+          <p class="field-hint">El email no se puede modificar.</p>
+        </div>
+
+        <div class="form-group" id="fg-profile-name">
+          <label for="profile-name">Nombre visible</label>
+          <input type="text" id="profile-name" placeholder="Tu nombre" />
+        </div>
+
+        <div class="form-group">
+          <label for="profile-photo">URL de foto de perfil</label>
+          <input type="url" id="profile-photo" placeholder="https://ejemplo.com/foto.jpg" />
+          <p class="field-hint">Introduce una URL válida para tu foto de perfil.</p>
+        </div>
+
+        <hr />
+
+        <!-- SECCIÓN: Cambiar Contraseña -->
+        <h3 class="section-title">Cambiar Contraseña</h3>
+
+        <div class="form-group" id="fg-profile-password">
+          <label for="profile-password">Nueva contraseña</label>
+          <input type="password" id="profile-password" placeholder="Mínimo 6 caracteres" />
+          <p class="field-error">La contraseña debe tener al menos 6 caracteres.</p>
+        </div>
+
+        <div class="form-group" id="fg-profile-password-confirm">
+          <label for="profile-password-confirm">Confirmar nueva contraseña</label>
+          <input type="password" id="profile-password-confirm" placeholder="Repite la contraseña" />
+          <p class="field-error">Las contraseñas no coinciden.</p>
+        </div>
+
+        <hr />
+
+        <!-- Feedback -->
+        <div id="profile-feedback" class="hidden"></div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+          <button type="submit" id="btn-profile-save" class="btn btn-primary btn-lg">
+            Guardar cambios
+          </button>
+          <button type="button" id="btn-profile-logout" class="btn btn-secondary">
+            Cerrar sesión
+          </button>
         </div>
       </div>
-
-      <hr />
-
-      <!-- SECCIÓN: Cambiar contraseña -->
-      <h3 class="section-title" data-i18n="profile-section-password">Cambiar Contraseña</h3>
-      <p class="text-muted" style="font-size: 0.85rem;" data-i18n="profile-hint-password-empty">Deja los campos vacíos si no deseas cambiar la contraseña.</p>
-
-      <div class="form-group" id="fg-profile-password">
-        <label for="profile-password" data-i18n="profile-label-password">Nueva contraseña</label>
-        <input type="password" id="profile-password" placeholder="Mínimo 6 caracteres" data-i18n-placeholder="profile-placeholder-password" />
-        <p class="field-error hidden" id="profile-password-length-error" data-i18n="profile-error-password-length">La contraseña debe tener al menos 6 caracteres.</p>
-      </div>
-
-      <div class="form-group" id="fg-profile-password-confirm">
-        <label for="profile-password-confirm" data-i18n="profile-label-password-confirm">Confirmar nueva contraseña</label>
-        <input type="password" id="profile-password-confirm" placeholder="Repite la contraseña" data-i18n-placeholder="profile-placeholder-password-confirm" />
-        <p class="field-error hidden" id="profile-password-match-error" data-i18n="profile-error-password-match">Las contraseñas no coinciden.</p>
-      </div>
-
-      <hr />
-
-      <!-- Feedback -->
-      <div id="profile-feedback" class="hidden"></div>
-
-      <!-- Botones -->
-      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
-        <button type="submit" id="btn-profile-save" class="btn btn-primary btn-lg" data-i18n="profile-btn-save">
-          Guardar cambios
-        </button>
-        <button type="button" id="btn-profile-logout" class="btn btn-secondary" data-i18n="profile-btn-logout">
-          Cerrar sesión
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Estado de carga -->
-  <div id="profile-loading" class="text-muted" data-i18n="profile-loading">
-    Cargando perfil...
-  </div>
+    </div>
+  </form>
 </AdminLayout>
 
 <script>
   import { initUserProfile } from "../../components/admin/UserProfile";
   initUserProfile();
 </script>
+
+<style>
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text, #1a1a2e);
+  }
+
+  .field-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+    margin-top: 0.25rem;
+  }
+
+  .field-error {
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 0.25rem;
+    display: none;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+    margin: 1.5rem 0;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  .feedback {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .feedback-success {
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  .feedback-error {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+</style>

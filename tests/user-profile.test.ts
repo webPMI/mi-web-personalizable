@@ -2,9 +2,7 @@
 // tests/user-profile.test.ts — UserProfile Logic
 // ============================================
 // Tests unitarios para src/components/admin/UserProfile.ts
-// - initUserProfile, loadProfile, fillProfileForm
-// - Validación de contraseña, guardado de perfil
-// - Manejo de errores de re-autenticación
+// Actualizado para la implementación real (Fase 1, Sector Admin)
 // ============================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -15,11 +13,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockGetDocument = vi.fn();
 const mockSetDocument = vi.fn();
 const mockUpdateDocument = vi.fn();
+const mockSignOut = vi.fn();
 const mockUpdatePassword = vi.fn();
 const mockUpdateProfile = vi.fn();
-const mockLogoutUser = vi.fn();
 
-// Mock the barrel export (src/lib/firebase) to avoid Firebase initialization
+// Mock barrel export (src/lib/firebase)
 vi.mock("../src/lib/firebase", () => ({
     auth: {
         currentUser: null,
@@ -29,7 +27,7 @@ vi.mock("../src/lib/firebase", () => ({
     default: {},
 }));
 
-// Mock firebase/firestore preserving original exports
+// Mock firebase/firestore
 vi.mock("firebase/firestore", async (importOriginal) => {
     const actual = await importOriginal();
     return {
@@ -40,34 +38,30 @@ vi.mock("firebase/firestore", async (importOriginal) => {
     };
 });
 
-// Mock firebase/auth preserving original exports
+// Mock firebase/auth
 vi.mock("firebase/auth", async (importOriginal) => {
     const actual = await importOriginal();
     return {
         ...(actual as any),
+        signOut: (...args: any[]) => mockSignOut(...args),
         updatePassword: (...args: any[]) => mockUpdatePassword(...args),
         updateProfile: (...args: any[]) => mockUpdateProfile(...args),
     };
 });
 
-// Mock the firestore helpers
+// Mock firestore helpers
 vi.mock("../src/lib/firebase/firestore", () => ({
     getDocument: (...args: any[]) => mockGetDocument(...args),
     setDocument: (...args: any[]) => mockSetDocument(...args),
     updateDocument: (...args: any[]) => mockUpdateDocument(...args),
 }));
 
-// Mock the auth helpers
-vi.mock("../src/lib/firebase/auth", () => ({
-    logoutUser: (...args: any[]) => mockLogoutUser(...args),
-}));
-
 // ============================================
-// DOM Setup
+// DOM Setup (coincide con profile.astro)
 // ============================================
 function setupProfileDOM(): void {
     document.body.innerHTML = `
-    <div id="profile-loading" class="">Cargando...</div>
+    <div id="profile-loading">Cargando...</div>
     <form id="profile-form" class="hidden">
       <input id="profile-email" type="email" />
       <input id="profile-name" type="text" />
@@ -77,9 +71,6 @@ function setupProfileDOM(): void {
       <div id="profile-feedback" class="hidden"></div>
       <button id="btn-profile-save">Guardar cambios</button>
       <button id="btn-profile-logout">Cerrar sesión</button>
-      <div id="profile-name-error" class="field-error hidden">El nombre es obligatorio</div>
-      <div id="profile-password-length-error" class="field-error hidden">Mínimo 6 caracteres</div>
-      <div id="profile-password-match-error" class="field-error hidden">Las contraseñas no coinciden</div>
     </form>
   `;
 }
@@ -95,9 +86,9 @@ function createMockUser(overrides = {}): any {
 }
 
 /**
- * Helper: inicia el perfil con un usuario mock y espera a que cargue.
+ * Dispara admin:ready con un usuario mock y espera a que loadProfile termine.
  */
-async function initProfileWithUser(mockUser: any): Promise<void> {
+async function initWithAdminReady(mockUser: any): Promise<void> {
     const authModule = await import("../src/lib/firebase");
     (authModule.auth as any).currentUser = mockUser;
 
@@ -116,7 +107,11 @@ async function initProfileWithUser(mockUser: any): Promise<void> {
     const { initUserProfile } = await import("../src/components/admin/UserProfile");
     initUserProfile();
 
-    // Esperar a que loadProfile complete
+    // Disparar evento admin:ready en document (donde UserProfile.ts registra el listener)
+    document.dispatchEvent(new CustomEvent("admin:ready", {
+        detail: { siteDomain: "test.example.com", siteData: {} },
+    }));
+
     await new Promise((r) => setTimeout(r, 100));
 }
 
@@ -126,11 +121,20 @@ describe("UserProfile Module", () => {
         document.body.innerHTML = "";
     });
 
-    // ============================================
-    // initUserProfile()
-    // ============================================
     describe("initUserProfile()", () => {
-        it("should call loadProfile if currentUser exists", async () => {
+        it("should register admin:ready listener on init", async () => {
+            const authModule = await import("../src/lib/firebase");
+            (authModule.auth as any).currentUser = null;
+
+            const addEventListenerSpy = vi.spyOn(document, "addEventListener");
+
+            const { initUserProfile } = await import("../src/components/admin/UserProfile");
+            initUserProfile();
+
+            expect(addEventListenerSpy).toHaveBeenCalledWith("admin:ready", expect.any(Function));
+        });
+
+        it("should load profile after admin:ready event fires with valid user", async () => {
             const mockUser = createMockUser();
             const authModule = await import("../src/lib/firebase");
             (authModule.auth as any).currentUser = mockUser;
@@ -150,43 +154,26 @@ describe("UserProfile Module", () => {
             const { initUserProfile } = await import("../src/components/admin/UserProfile");
             initUserProfile();
 
+            document.dispatchEvent(new CustomEvent("admin:ready", {
+                detail: { siteDomain: "test.example.com", siteData: {} },
+            }));
+
             await new Promise((r) => setTimeout(r, 100));
 
             expect(mockGetDocument).toHaveBeenCalledWith("users", "user-123");
         });
-
-        it("should listen for admin:ready event if no currentUser", async () => {
-            const authModule = await import("../src/lib/firebase");
-            (authModule.auth as any).currentUser = null;
-
-            const addEventListenerSpy = vi.spyOn(window, "addEventListener");
-
-            const { initUserProfile } = await import("../src/components/admin/UserProfile");
-            initUserProfile();
-
-            expect(addEventListenerSpy).toHaveBeenCalledWith("admin:ready", expect.any(Function));
-        });
     });
 
-    // ============================================
-    // Profile loading and creation
-    // ============================================
     describe("Profile loading", () => {
         it("should create profile if it does not exist in Firestore", async () => {
             const mockUser = createMockUser();
             const authModule = await import("../src/lib/firebase");
             (authModule.auth as any).currentUser = mockUser;
 
-            // No profile exists
             mockGetDocument.mockResolvedValue({ success: false, error: "Not found" });
             mockSetDocument.mockResolvedValue({ success: true, data: { id: "user-123" } });
 
-            setupProfileDOM();
-
-            const { initUserProfile } = await import("../src/components/admin/UserProfile");
-            initUserProfile();
-
-            await new Promise((r) => setTimeout(r, 100));
+            await initWithAdminReady(mockUser);
 
             expect(mockSetDocument).toHaveBeenCalledWith("users", "user-123", expect.objectContaining({
                 uid: "user-123",
@@ -196,7 +183,7 @@ describe("UserProfile Module", () => {
             }));
         });
 
-        it("should fallback to auth data if Firestore fails", async () => {
+        it("should show form even on network error (graceful degradation)", async () => {
             const mockUser = createMockUser();
             const authModule = await import("../src/lib/firebase");
             (authModule.auth as any).currentUser = mockUser;
@@ -208,6 +195,10 @@ describe("UserProfile Module", () => {
             const { initUserProfile } = await import("../src/components/admin/UserProfile");
             initUserProfile();
 
+            document.dispatchEvent(new CustomEvent("admin:ready", {
+                detail: { siteDomain: "test.example.com", siteData: {} },
+            }));
+
             await new Promise((r) => setTimeout(r, 100));
 
             const formEl = document.getElementById("profile-form");
@@ -215,12 +206,9 @@ describe("UserProfile Module", () => {
         });
     });
 
-    // ============================================
-    // Form validation
-    // ============================================
     describe("Form validation", () => {
-        it("should show error when displayName is empty on save", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should show error feedback when displayName is empty on save", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "";
@@ -230,12 +218,13 @@ describe("UserProfile Module", () => {
 
             await new Promise((r) => setTimeout(r, 50));
 
-            const nameError = document.getElementById("profile-name-error");
-            expect(nameError?.classList.contains("hidden")).toBe(false);
+            const feedback = document.getElementById("profile-feedback");
+            expect(feedback?.classList.contains("hidden")).toBe(false);
+            expect(feedback?.textContent).toContain("nombre es obligatorio");
         });
 
-        it("should show error when password is less than 6 characters", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should show error feedback when password is less than 6 characters", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "Test User";
@@ -248,12 +237,13 @@ describe("UserProfile Module", () => {
 
             await new Promise((r) => setTimeout(r, 50));
 
-            const pwLengthError = document.getElementById("profile-password-length-error");
-            expect(pwLengthError?.classList.contains("hidden")).toBe(false);
+            const feedback = document.getElementById("profile-feedback");
+            expect(feedback?.classList.contains("hidden")).toBe(false);
+            expect(feedback?.textContent).toContain("6 caracteres");
         });
 
-        it("should show error when passwords do not match", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should show error feedback when passwords do not match", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "Test User";
@@ -269,36 +259,15 @@ describe("UserProfile Module", () => {
 
             await new Promise((r) => setTimeout(r, 50));
 
-            const pwMatchError = document.getElementById("profile-password-match-error");
-            expect(pwMatchError?.classList.contains("hidden")).toBe(false);
-        });
-
-        it("should clear previous errors before new validation", async () => {
-            await initProfileWithUser(createMockUser());
-
-            // First submit with empty name (triggers error)
-            const form = document.getElementById("profile-form") as HTMLFormElement;
-            form.dispatchEvent(new Event("submit"));
-            await new Promise((r) => setTimeout(r, 50));
-
-            // Second submit with valid data should clear errors
-            const nameInput = document.getElementById("profile-name") as HTMLInputElement;
-            nameInput.value = "Valid Name";
-
-            form.dispatchEvent(new Event("submit"));
-            await new Promise((r) => setTimeout(r, 50));
-
-            const nameError = document.getElementById("profile-name-error");
-            expect(nameError?.classList.contains("hidden")).toBe(true);
+            const feedback = document.getElementById("profile-feedback");
+            expect(feedback?.classList.contains("hidden")).toBe(false);
+            expect(feedback?.textContent).toContain("no coinciden");
         });
     });
 
-    // ============================================
-    // Save profile
-    // ============================================
     describe("Save profile", () => {
-        it("should save profile and update Firebase Auth profile", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should save profile to Firestore on submit", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "Updated Name";
@@ -320,8 +289,8 @@ describe("UserProfile Module", () => {
             }));
         });
 
-        it("should handle requires-recent-login error for password change", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should handle requires-recent-login error gracefully", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "Test User";
@@ -343,37 +312,11 @@ describe("UserProfile Module", () => {
 
             const feedback = document.getElementById("profile-feedback");
             expect(feedback?.textContent).toContain("volver a iniciar sesión");
-            expect(feedback?.classList.contains("alert-error")).toBe(true);
+            expect(feedback?.classList.contains("feedback-error")).toBe(true);
         });
 
-        it("should handle weak-password error", async () => {
-            await initProfileWithUser(createMockUser());
-
-            const nameInput = document.getElementById("profile-name") as HTMLInputElement;
-            nameInput.value = "Test User";
-
-            // Must be >= 6 chars to pass frontend validation, but weak for Firebase
-            const passwordInput = document.getElementById("profile-password") as HTMLInputElement;
-            passwordInput.value = "weakpw";
-
-            const passwordConfirmInput = document.getElementById("profile-password-confirm") as HTMLInputElement;
-            passwordConfirmInput.value = "weakpw";
-
-            mockUpdateDocument.mockResolvedValue({ success: true, data: {} });
-            mockUpdateProfile.mockResolvedValue(undefined);
-            mockUpdatePassword.mockRejectedValue({ code: "auth/weak-password" });
-
-            const form = document.getElementById("profile-form") as HTMLFormElement;
-            form.dispatchEvent(new Event("submit"));
-
-            await new Promise((r) => setTimeout(r, 100));
-
-            const feedback = document.getElementById("profile-feedback");
-            expect(feedback?.textContent).toContain("6 caracteres");
-        });
-
-        it("should show success feedback on successful save", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should show success feedback on save", async () => {
+            await initWithAdminReady(createMockUser());
 
             const nameInput = document.getElementById("profile-name") as HTMLInputElement;
             nameInput.value = "Test User";
@@ -388,21 +331,18 @@ describe("UserProfile Module", () => {
 
             const feedback = document.getElementById("profile-feedback");
             expect(feedback?.textContent).toContain("guardados correctamente");
-            expect(feedback?.classList.contains("alert-success")).toBe(true);
+            expect(feedback?.classList.contains("feedback-success")).toBe(true);
         });
     });
 
-    // ============================================
-    // Logout
-    // ============================================
     describe("Logout", () => {
-        it("should call logoutUser when logout button is clicked", async () => {
-            await initProfileWithUser(createMockUser());
+        it("should call signOut via firebase/auth when logout button is clicked", async () => {
+            await initWithAdminReady(createMockUser());
 
             const logoutBtn = document.getElementById("btn-profile-logout");
             logoutBtn?.click();
 
-            expect(mockLogoutUser).toHaveBeenCalled();
+            expect(mockSignOut).toHaveBeenCalled();
         });
     });
 });

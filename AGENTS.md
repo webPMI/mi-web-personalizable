@@ -2,6 +2,23 @@
 
 > ⚠️ **Nota:** Este proyecto **no utiliza Claude**. Estas reglas aplican para cualquier otro agente de IA (Cline, Copilot, etc.)
 
+## 🤖 Sistema Multi-Agente (Orquestación)
+
+> **NUEVO:** Este proyecto utiliza un sistema de **orquestación multi-agente** con 3 skills especializados + 1 orquestador.
+> 
+> **Punto de entrada obligatorio:** Antes de cualquier tarea, leer `.agents/README.md`.
+> 
+> **Skills disponibles:**
+> - `qa-auditor` — Testing, sanitización, seguridad, auditoría sintética
+> - `sector-admin` — Panel de administración, perfil, usuarios, RBAC, temas
+> - `sector-public` — Frontend público, layout dinámico, blog, SEO
+> 
+> **Protocolo de orquestación:** `.agents/docs/orchestration-protocol.md`
+> 
+> **Regla de oro:** El orquestador analiza y delega. Cada skill trabaja en su sector sin tocar otros.
+
+---
+
 ## 🥇 Golden Rules
 
 ### 1. Rol de Asesor, No de Ejecutor Automático

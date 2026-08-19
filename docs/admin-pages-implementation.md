@@ -844,3 +844,244 @@ const { blocks = [] } = Astro.props;
 
     return (
       <div class={`block block-${block.type}`} data-block-id={block.id} {styleAttr}>
+        <Fragment set:html={html} />
+      </div>
+    );
+  })
+}
+
+<script>
+  // Lazy loading para bloques pesados (galerías, videos)
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const block = entry.target;
+          if (block.dataset.blockType === "media-gallery") {
+            // Inicializar galería
+          }
+          observer.unobserve(block);
+        }
+      });
+    }, { rootMargin: "200px" });
+
+    document.querySelectorAll("[data-block-type]").forEach(el => observer.observe(el));
+  });
+</script>
+```
+
+### 8.3 Función `buildInlineStyle`
+
+```typescript
+// src/lib/blocks/renderer.ts
+export function buildInlineStyle(style: BlockStyle): string {
+  const parts: string[] = [];
+
+  if (style.textColor) parts.push(`color: ${style.textColor}`);
+  if (style.backgroundColor) parts.push(`background-color: ${style.backgroundColor}`);
+  if (style.paddingY) parts.push(`padding-top: ${style.paddingY}px`, `padding-bottom: ${style.paddingY}px`);
+  if (style.paddingX) parts.push(`padding-left: ${style.paddingX}px`, `padding-right: ${style.paddingX}px`);
+  if (style.marginTop) parts.push(`margin-top: ${style.marginTop}px`);
+  if (style.marginBottom) parts.push(`margin-bottom: ${style.marginBottom}px`);
+  if (style.textAlign) parts.push(`text-align: ${style.textAlign}`);
+  if (style.borderRadius) parts.push(`border-radius: ${style.borderRadius}px`);
+  if (style.fullWidth) parts.push(`width: 100%`);
+
+  return parts.join("; ");
+}
+```
+
+---
+
+## 9. Plan de Implementación por Fases
+
+### Fase 0: Preparación (Antes de tocar código)
+
+**Objetivo:** Tener todo listo para implementar sin bloqueos.
+
+- [ ] Decidir: ¿Array o subcolección? → **Recomendación: Subcolección directa**
+- [ ] Congelar la interfaz `CustomPage` final
+- [ ] Revisar y aprobar esta documentación
+- [ ] Preparar el entorno de testing (Vitest configurado)
+
+### Fase 1: Modelo de Datos y Firestore
+
+**Objetivo:** Actualizar el modelo de datos y crear las funciones CRUD.
+
+**Archivos a crear:**
+- `src/lib/pages.ts` — CRUD para subcolección `sites/{domain}/pages/{pageId}`
+
+**Archivos a modificar:**
+- `src/lib/site.ts` — Actualizar interfaz `CustomPage` con campos nuevos (opcionales)
+
+**Tests:**
+- `tests/pages.test.ts` — Tests de las funciones CRUD (mock de Firestore)
+
+### Fase 2: Block Registry
+
+**Objetivo:** Implementar el registro modular de bloques.
+
+**Archivos a crear:**
+- `src/lib/blocks/registry.ts` — BlockRegistry
+- `src/lib/blocks/definitions.ts` — Registro de bloques básicos (heading, paragraph, image)
+- `src/lib/blocks/renderer.ts` — Funciones de renderizado + buildInlineStyle
+
+**Tests:**
+- `tests/block-registry.test.ts` — Tests unitarios del registry
+
+### Fase 3: BlockRenderer y Ruta Dinámica
+
+**Objetivo:** Renderizar páginas personalizadas en el frontend público.
+
+**Archivos a crear:**
+- `src/components/public/BlockRenderer.astro` — Renderizador de bloques
+- `src/pages/[...slug].astro` — Ruta dinámica
+
+**Tests:**
+- `tests/block-renderer.test.ts` — Tests de renderizado
+
+### Fase 4: Editor UI (3 Columnas)
+
+**Objetivo:** Rediseñar el editor con layout profesional de 3 columnas.
+
+**Archivos a crear:**
+- `src/components/admin/BlockInserter.ts` — Panel izquierdo
+- `src/components/admin/EditorCanvas.ts` — Lienzo central
+- `src/components/admin/InspectorPanel.ts` — Panel derecho
+- `src/components/admin/BlockToolbar.ts` — Toolbar flotante
+- `src/styles/editor.css` — Estilos del editor
+
+**Archivos a modificar:**
+- `src/pages/admin/pages/editor.astro` — Layout de 3 columnas
+- `src/components/admin/PageEditorConfig.ts` — Lógica con BlockRegistry
+
+### Fase 5: Migración y Features Avanzadas
+
+**Objetivo:** Migrar páginas existentes y añadir funcionalidades premium.
+
+- [ ] Script de migración: array → subcolección
+- [ ] Autosave (localStorage + Firestore)
+- [ ] Historial de revisiones (Undo/Redo)
+- [ ] Preview responsivo (Desktop/Tablet/Mobile)
+- [ ] SEO Health Score en tiempo real
+
+---
+
+## 10. Testing
+
+### 10.1 Tests Unitarios
+
+| Archivo de test | Lo que prueba | Prioridad |
+|-----------------|---------------|-----------|
+| `tests/block-registry.test.ts` | BlockRegistry: register, get, render, validate, sanitize | 🔴 Alta |
+| `tests/pages.test.ts` | CRUD de páginas en Firestore (mock) | 🔴 Alta |
+| `tests/block-renderer.test.ts` | Renderizado HTML de cada tipo de bloque | 🔴 Alta |
+| `tests/sanitizer.test.ts` | sanitizeBlockContent, sanitizeHtml, isValidSlug | 🟡 Media |
+| `tests/editor.test.ts` | PageEditorConfig: slugify, validación, guardado | 🟡 Media |
+
+### 10.2 Ejemplo: Test del BlockRegistry
+
+```typescript
+// tests/block-registry.test.ts
+import { describe, it, expect, beforeEach } from "vitest";
+import { BlockRegistry } from "../src/lib/blocks/registry";
+
+describe("BlockRegistry", () => {
+  beforeEach(() => {
+    // Limpiar registry entre tests
+    // (necesitaríamos un método reset() o recrear el módulo)
+  });
+
+  it("should register and retrieve a block definition", () => {
+    BlockRegistry.register({
+      type: "text-heading",
+      label: "Heading",
+      icon: "H",
+      category: "text",
+      defaultContent: { text: "Hello", level: 2 },
+      render: (content) => `<h${content.level}>${content.text}</h${content.level}>`,
+    });
+
+    const def = BlockRegistry.get("text-heading");
+    expect(def).toBeDefined();
+    expect(def?.label).toBe("Heading");
+  });
+
+  it("should render a block by type", () => {
+    const html = BlockRegistry.render({
+      id: "1",
+      type: "text-heading",
+      content: { text: "Test", level: 2 },
+    });
+    expect(html).toBe("<h2>Test</h2>");
+  });
+
+  it("should return error HTML for unknown block type", () => {
+    const html = BlockRegistry.render({
+      id: "1",
+      type: "unknown" as any,
+      content: {},
+    });
+    expect(html).toContain("Bloque desconocido");
+  });
+
+  it("should create a default block", () => {
+    BlockRegistry.register({
+      type: "text-paragraph",
+      label: "Paragraph",
+      icon: "P",
+      category: "text",
+      defaultContent: { text: "Default paragraph text" },
+      render: (content) => `<p>${content.text}</p>`,
+    });
+
+    const block = BlockRegistry.createDefault("text-paragraph");
+    expect(block.type).toBe("text-paragraph");
+    expect(block.content.text).toBe("Default paragraph text");
+    expect(block.id).toMatch(/^block-/);
+  });
+
+  it("should validate block content", () => {
+    BlockRegistry.register({
+      type: "text-heading",
+      label: "Heading",
+      icon: "H",
+      category: "text",
+      defaultContent: { text: "", level: 2 },
+      render: (content) => `<h${content.level}>${content.text}</h${content.level}>`,
+      validate: (content) => {
+        if (!content.text || content.text.trim() === "") return "El texto no puede estar vacío";
+        return null;
+      },
+    });
+
+    const error = BlockRegistry.validate({
+      id: "1",
+      type: "text-heading",
+      content: { text: "", level: 2 },
+    });
+    expect(error).toBe("El texto no puede estar vacío");
+
+    const ok = BlockRegistry.validate({
+      id: "1",
+      type: "text-heading",
+      content: { text: "Valid", level: 2 },
+    });
+    expect(ok).toBeNull();
+  });
+});
+```
+
+### 10.3 Tests de Integración
+
+```typescript
+// tests/pages.test.ts (mock de Firestore)
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock de Firebase Firestore
+vi.mock("firebase/firestore", () => ({
+  getDoc: vi.fn(),
+  getDocs: vi.fn(),
+  setDoc: vi.fn(),
+  deleteDoc: vi.fn(),
+  doc: vi.fn((...args) => ({ path:

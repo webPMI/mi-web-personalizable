@@ -1,6 +1,4 @@
 // ============================================
-// tests/login-page.test.ts — Pruebas de lógica de login.astro
-// ============================================
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 describe("Login Page — Lógica de validación de formulario", () => {
